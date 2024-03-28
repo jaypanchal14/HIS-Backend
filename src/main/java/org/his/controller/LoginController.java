@@ -27,4 +27,11 @@ public class LoginController {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(resp);
     }
 
+    @PostMapping("/changePassword")
+    public ResponseEntity<AuthResponse> changePassword(@RequestBody AuthRequest request){
+        AuthResponse resp;
+        resp = loginService.changePassword(request);
+        return ResponseEntity.status(HttpStatus.OK).body(resp);
+    }
+
 }

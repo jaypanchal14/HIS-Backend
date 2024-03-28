@@ -8,6 +8,6 @@ import lombok.Data;
 public class PersonalDetailResp {
 
     private PersonalDetail response;
-    private Error error;
+    private String error;
 
 }

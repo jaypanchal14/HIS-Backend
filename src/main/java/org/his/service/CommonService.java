@@ -1,7 +1,6 @@
 package org.his.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.his.bean.Error;
 import org.his.bean.PersonalDetail;
 import org.his.bean.PersonalDetailResp;
 import org.his.config.Roles;
@@ -25,9 +24,7 @@ public class CommonService {
         if(Roles.DOCTOR.toString().equals(role)){
             Optional<Admin> obj = adminRepo.findById(id);
             if(obj.isEmpty()){
-                Error err = new Error();
-                err.setMsg("Username not found.");
-                resp.setError(err);
+                resp.setError("Username not found");
                 return resp;
             }
             PersonalDetail detail = getDetailFromBean(obj.get());
