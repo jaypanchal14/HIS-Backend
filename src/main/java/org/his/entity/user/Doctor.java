@@ -37,6 +37,7 @@ public class Doctor {
     private int thu;
     private int fri;
     private int sat;
+    private int sun;
 
     @UpdateTimestamp
     private OffsetDateTime updatedAt;

@@ -22,4 +22,7 @@ public interface LoginRepo extends JpaRepository<Login, String> {
     @Query("UPDATE Login l set l.password = ?2 where l.userId = ?1")
     public Integer updatePassword(String userId, String password);
 
+    @Query("SELECT l.userId FROM Login l where l.username = ?1 and l.role = ?2")
+    public Optional<String> findUserIdByUsername(String username, String role);
+
 }

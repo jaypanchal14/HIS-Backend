@@ -2,6 +2,7 @@ package org.his.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.his.bean.PersonalDetailResp;
+import org.his.bean.ScheduleDetailResp;
 import org.his.service.CommonService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,6 +24,13 @@ public class CommonController {
     public ResponseEntity<?> getPersonalDetails(@RequestParam(name="id") String id, @RequestParam(name="role") String role){
         log.info("Request received for getting personal details.");
         PersonalDetailResp resp = service.getPersonalDetail(id, role);
+        return ResponseEntity.status(HttpStatus.OK).body(resp);
+    }
+
+    @GetMapping("/scheduleDetails")
+    public ResponseEntity<?> getScheduleDetails(@RequestParam(name="email") String email, @RequestParam(name="role") String role){
+        log.info("Request received for getting schedule details.");
+        ScheduleDetailResp resp = service.getScheduleDetail(email, role);
         return ResponseEntity.status(HttpStatus.OK).body(resp);
     }
 
