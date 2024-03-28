@@ -3,9 +3,13 @@ Sprint-boot API to handle HIS functionalities. <br>
 
 Steps to run :
 1) Set up the database : <br>
-    (a) Create a user first : <br>
-    ```create user his@localhost identified by '12345678';```
-    (b) Provide all privileges: <br>
+    (a) Create database with name "his". <br>
+    ```create database his;``` 
+    <br>
+    (b) Create a user first : <br>
+    ```create user his@localhost identified by '12345678';``` 
+    <br>
+    (c) Provide all privileges: <br>
     ```GRANT ALL PRIVILEGES ON *.* to his@localhost WITH GRANT OPTION;```
     <br>
     In case you get issue while creating the user regarding password policy: <br>
