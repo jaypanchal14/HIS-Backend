@@ -20,8 +20,9 @@ public class PersonalDetail {
     private String department;
     private int experience;
     private String address;
-
     private String profileImage;
 
+    //Only for head-nurse
+    private boolean isHead;
 
 }

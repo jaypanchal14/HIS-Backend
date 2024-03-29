@@ -12,7 +12,6 @@ import org.his.repo.user.NurseRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.print.Doc;
 import java.util.Optional;
 
 @Slf4j
