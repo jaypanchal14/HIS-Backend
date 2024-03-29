@@ -17,4 +17,12 @@ Steps to run :
     <br><br>
 2) Check the properties file, if you have provided all the correct configuration. <br><br>
 3) Run the application with below command : <br>
-    ```mvn spring-boot:run```
+    ```
+    mvn spring-boot:run
+    ```
+    <br>
+
+
+Note: (Only for Jay)<br>
+For exposing your API to the internet, run below with ngrok : <br>
+```ngrok http 8090 --domain=present-neat-mako.ngrok-free.app```

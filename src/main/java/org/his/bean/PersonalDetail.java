@@ -24,5 +24,8 @@ public class PersonalDetail {
 
     //Only for head-nurse
     private boolean isHead;
+    //Used by admin for checking
+    private String userId;
+    private boolean isActive;
 
 }

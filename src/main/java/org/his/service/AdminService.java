@@ -1,14 +1,14 @@
 package org.his.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.his.bean.GeneralResp;
-import org.his.bean.ScheduleDetail;
+import org.his.bean.*;
 import org.his.config.Roles;
-import org.his.entity.user.Doctor;
-import org.his.entity.user.Nurse;
+import org.his.entity.Login;
+import org.his.entity.user.*;
+import org.his.exception.AuthenticationException;
 import org.his.exception.NoSuchAccountException;
-import org.his.repo.user.DoctorRepo;
-import org.his.repo.user.NurseRepo;
+import org.his.repo.LoginRepo;
+import org.his.repo.user.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -19,10 +19,22 @@ import java.util.Optional;
 public class AdminService {
 
     @Autowired
+    private AdminRepo adminRepo;
+
+    @Autowired
     private DoctorRepo doctorRepo;
 
     @Autowired
     private NurseRepo nurseRepo;
+
+    @Autowired
+    private PharmaRepo pharmaRepo;
+
+    @Autowired
+    private ReceptionistRepo receptionRepo;
+
+    @Autowired
+    private LoginRepo loginRepo;
 
     public GeneralResp updateSchedule(ScheduleDetail request) {
         GeneralResp resp = new GeneralResp();
@@ -109,5 +121,139 @@ public class AdminService {
             return true;
         }
         return request.getSun() < 0 || request.getSun() > 3;
+    }
+
+    public PersonalDetailResp checkIfUserExist(CheckUserReq request) {
+        PersonalDetailResp resp = new PersonalDetailResp();
+        String msg = null;
+        try{
+            //Check if admin is present
+
+            //Retrieve details based on email-id and role
+            Optional<Login> optAccount = loginRepo.findById(request.getEmail());
+            if (optAccount.isEmpty()) {
+                msg = "Username not found in the database.";
+                throw new AuthenticationException(msg);
+            }
+
+            Login account = optAccount.get();
+            switch(request.getRole()) {
+                case "NURSE":
+                    Optional<Nurse> optNurse = nurseRepo.findById(account.getUserId());
+                    if (optNurse.isEmpty()) {
+                        resp.setError("Nurse not found in database");
+                    }else{
+                        Nurse n = optNurse.get();
+                        PersonalDetail detail = new PersonalDetail();
+                        detail.setFirstName(n.getFirstName());
+                        detail.setLastName(n.getLastName());
+                        detail.setEmail(request.getEmail());
+                        detail.setActive(account.isActive());
+                        detail.setUserId(account.getUserId());
+                        resp.setResponse(detail);
+                    }
+                    break;
+
+                case "DOCTOR":
+                    Optional<Doctor> optDoc = doctorRepo.findById(account.getUserId());
+                    if (optDoc.isEmpty()) {
+                        resp.setError("Doctor not found in database");
+                    }else{
+                        Doctor d = optDoc.get();
+                        PersonalDetail detail = new PersonalDetail();
+                        detail.setFirstName(d.getFirstName());
+                        detail.setLastName(d.getLastName());
+                        detail.setEmail(request.getEmail());
+                        detail.setUserId(account.getUserId());
+                        detail.setActive(account.isActive());
+                        resp.setResponse(detail);
+                    }
+                    break;
+
+                case "PHARMACIST":
+                    Optional<Pharma> optPharma = pharmaRepo.findById(account.getUserId());
+                    if (optPharma.isEmpty()) {
+                        resp.setError("Username not found");
+                    }else{
+                        Pharma p = optPharma.get();
+                        PersonalDetail detail = new PersonalDetail();
+                        detail.setFirstName(p.getFirstName());
+                        detail.setLastName(p.getLastName());
+                        detail.setEmail(request.getEmail());
+                        detail.setUserId(account.getUserId());
+                        detail.setActive(account.isActive());
+                        resp.setResponse(detail);
+                    }
+                    break;
+
+                case "RECEPTIONIST":
+                    Optional<Receptionist> optReception = receptionRepo.findById(account.getUserId());
+                    if (optReception.isEmpty()) {
+                        resp.setError("Username not found");
+                    }else{
+                        Receptionist r = optReception.get();
+                        PersonalDetail detail = new PersonalDetail();
+                        detail.setFirstName(r.getFirstName());
+                        detail.setLastName(r.getLastName());
+                        detail.setEmail(request.getEmail());
+                        detail.setUserId(account.getUserId());
+                        detail.setActive(account.isActive());
+                        resp.setResponse(detail);
+                    }
+                    break;
+
+                default:
+                    msg = "Undefined role passed in the request.";
+                    log.error(msg);
+                    resp.setError(msg);
+            }
+
+        } catch (Exception e){
+            log.error("Exception occurred with msg : "+e.getMessage());
+            resp.setError(msg);
+        }
+        return resp;
+    }
+
+    public GeneralResp updateAccountStatus(UpdateAccStatusReq request) {
+        GeneralResp resp = new GeneralResp();
+        String msg = null;
+        try{
+            //Check if admin is allowed to perform this operation or not
+            Optional<Login> optAccount = loginRepo.findAccountByUserId(request.getAdminId(), "ADMIN");
+            if (optAccount.isEmpty()) {
+                msg = "Not allowed to perform this request";
+                throw new AuthenticationException("User doesn't have the privilege to perform this request.");
+            }
+
+            //Check if the user is present in the database or not
+            optAccount = loginRepo.findAccountByUserId(request.getUserId(), request.getRole());
+            if (optAccount.isEmpty()) {
+                msg = "No such user exists in the database to modify status.";
+                throw new AuthenticationException(msg);
+            }
+
+            if("A".equals(request.getAction())){
+                int res = loginRepo.updateAccountStatus( request.getUserId(), true);
+                if(res==0){
+                    throw new Exception("Failed while updating the status");
+                }
+            }else if("D".equals(request.getAction())){
+                int res = loginRepo.updateAccountStatus( request.getUserId(), false);
+                if(res==0){
+                    throw new Exception("Failed while updating the status");
+                }
+            }else{
+                throw new Exception("Wrong action code passed in the request.");
+            }
+            resp.setResponse("SUCCESS");
+        } catch(AuthenticationException e){
+            log.error("AuthenticationException occurred while updating the status: "+e.getMessage());
+            resp.setError(msg);
+        } catch(Exception e){
+            log.error("Exception occurred while updating the status: "+e.getMessage());
+            resp.setError(e.getMessage());
+        }
+        return resp;
     }
 }
