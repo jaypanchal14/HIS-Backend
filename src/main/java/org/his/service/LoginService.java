@@ -3,9 +3,12 @@ package org.his.service;
 import lombok.extern.slf4j.Slf4j;
 import org.his.bean.AuthRequest;
 import org.his.bean.AuthResponse;
+import org.his.bean.GeneralResp;
 import org.his.entity.Login;
 import org.his.exception.AuthenticationException;
 import org.his.repo.LoginRepo;
+import org.his.util.EmailService;
+import org.his.util.Utility;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,14 +21,8 @@ public class LoginService {
     @Autowired
     private LoginRepo loginRepo;
 
-    public void getAccount() {
-        Optional<Login> u = loginRepo.findAccountByUsername("his.team40@gmail.com","DOCTOR");
-        u.ifPresent(l -> System.out.println(l.toString()));
-    }
-
-    public void createAccount() {
-
-    }
+    @Autowired
+    private EmailService emailService;
 
     public AuthResponse authenticate(AuthRequest request) {
         AuthResponse resp = new AuthResponse();
@@ -63,7 +60,7 @@ public class LoginService {
         } catch (Exception e) {
             log.error("Exception occurred with msg : " + e.getMessage());
         }
-
+        resp.setResponse("FAILED");
         resp.setError(msg);
         log.error("User authenticated failure.");
         return resp;
@@ -107,7 +104,7 @@ public class LoginService {
         } catch (Exception e) {
             log.error("Exception occurred with msg : " + e.getMessage());
         }
-
+        resp.setResponse("FAILURE");
         resp.setError(msg);
         log.error("ChangePassword request failed.");
         return resp;
@@ -137,4 +134,38 @@ public class LoginService {
         return request.getRole() == null || request.getRole().isEmpty();
     }
 
+    public GeneralResp forgotPassword(String email) {
+        GeneralResp resp = new GeneralResp();
+        String msg = null;
+        try{
+            if(email == null || email.isEmpty()){
+                throw new Exception("Empty email address passed.");
+            }
+            Optional<Login> optAccount = loginRepo.findById(email);
+            if (optAccount.isEmpty()) {
+                msg = "Username not found in the database.";
+                throw new AuthenticationException(msg);
+            }
+
+            Login account = optAccount.get();
+            String newPass = Utility.generateRandomPassword(8);
+            Integer count = loginRepo.updatePassword(account.getUserId(), newPass);
+            if(count==0){
+                msg = "Unable to update the password in database for the user";
+                throw new Exception(msg);
+            }
+            if(emailService.sendEmailWithPassword(email, newPass)){
+                log.info("Email sent to the user with new password.");
+            }else{
+                log.warn("Got exception while sending email to the user with new password.");
+            }
+            log.info("Password updated successfully for account : "+count);
+            resp.setResponse("SUCCESS");
+        } catch (Exception e){
+            log.error("Exception occurred while forgotPassword: "+e.getMessage());
+            resp.setError(msg);
+            resp.setResponse("FAILED");
+        }
+        return resp;
+    }
 }
