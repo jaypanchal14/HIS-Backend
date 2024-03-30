@@ -38,4 +38,11 @@ public class AdminController {
         return ResponseEntity.status(HttpStatus.OK).body(resp);
     }
 
+    @GetMapping("/admin/getCount")
+    public ResponseEntity<?> countActiveUserByRole(@RequestParam(name="id") String id){
+        log.info("Request received to count active users.");
+        RoleCountResp resp = adminService.getActiveUserByRole(id);
+        return ResponseEntity.status(HttpStatus.OK).body(resp);
+    }
+
 }

@@ -1,11 +1,14 @@
 package org.his.repo;
 
+import org.his.bean.RoleCount;
 import org.his.entity.Login;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface LoginRepo extends JpaRepository<Login, String> {
@@ -29,5 +32,8 @@ public interface LoginRepo extends JpaRepository<Login, String> {
 
     @Query("SELECT l.userId FROM Login l where l.username = ?1 and l.role = ?2")
     public Optional<String> findUserIdByUsername(String username, String role);
+
+    @Query("SELECT new org.his.bean.RoleCount( l.role ,COUNT(l)) FROM Login l WHERE l.isActive = true GROUP BY l.role")
+    public List<RoleCount> countActiveUserByRole();
 
 }

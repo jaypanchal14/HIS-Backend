@@ -12,6 +12,9 @@ import org.his.repo.user.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Slf4j
@@ -252,6 +255,38 @@ public class AdminService {
             resp.setError(msg);
         } catch(Exception e){
             log.error("Exception occurred while updating the status: "+e.getMessage());
+            resp.setError(e.getMessage());
+        }
+        return resp;
+    }
+
+    public RoleCountResp getActiveUserByRole(String adminId) {
+        RoleCountResp resp = new RoleCountResp();
+        String msg = null;
+        try{
+            if(adminId == null || adminId.isEmpty()){
+                msg = "Empty adminId passed in the request.";
+                throw new AuthenticationException("Empty adminId passed");
+            }
+
+            Optional<Login> optAccount = loginRepo.findAccountByUserId(adminId, "ADMIN");
+            if (optAccount.isEmpty()) {
+                msg = "Not allowed to perform this request";
+                throw new AuthenticationException("User doesn't have the privilege to perform this request.");
+            }
+
+            List<RoleCount> ls = loginRepo.countActiveUserByRole();
+            //resp.setResponse(ls);
+            Map<String, Long> m = new HashMap<>();
+            for(RoleCount rc : ls){
+                m.put(rc.getRole(), rc.getCount());
+            }
+            resp.setResponse(m);
+        } catch (AuthenticationException e){
+            log.error("AuthenticationException occurred while getting active user count: "+e.getMessage());
+            resp.setError(msg);
+        } catch (Exception e){
+            log.error("Exception occurred while getting active user count: "+e.getMessage());
             resp.setError(e.getMessage());
         }
         return resp;
