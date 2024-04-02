@@ -1,18 +1,21 @@
 package org.his.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.his.bean.PersonalDetail;
-import org.his.bean.PersonalDetailResp;
-import org.his.bean.ScheduleDetail;
-import org.his.bean.ScheduleDetailResp;
+import org.his.bean.*;
 import org.his.config.Roles;
+import org.his.entity.Admit;
 import org.his.entity.user.*;
 import org.his.exception.AuthenticationException;
+import org.his.repo.AdmitRepo;
 import org.his.repo.LoginRepo;
 import org.his.repo.user.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -36,6 +39,12 @@ public class CommonService {
 
     @Autowired
     private LoginRepo loginRepo;
+
+    @Autowired
+    private PatientRepo patientRepo;
+
+    @Autowired
+    private AdmitRepo admitRepo;
 
     public PersonalDetailResp getPersonalDetail(String id, String role){
         PersonalDetailResp resp = new PersonalDetailResp();
@@ -417,6 +426,60 @@ public class CommonService {
             receptionist.setProfileImage(profileData.getProfileImage());
         }
         return receptionist;
+    }
+
+    public PatientResponse viewLivePatients(String role, String id, int isOP) {
+        PatientResponse response = new PatientResponse();
+
+        // Check if the role is supported
+        if (!role.equalsIgnoreCase("DOCTOR") && !role.equalsIgnoreCase("NURSE")) {
+            response.setError("Role not supported.");
+            return response;
+        }
+
+        List<PatientDetail> livePatients = new ArrayList<>();
+
+        // Fetch all admits from the database
+        List<Admit> admits = admitRepo.findAll();
+
+        // Iterate through admits and filter live patients based on role and isOP flag
+        for (Admit admit : admits) {
+            // Check if the patient is live (isActive) and matches the isOP flag
+            if (admit.isActive() && (isOP == 1 && "OP".equalsIgnoreCase(admit.getPatientType()) || isOP == 0 && "IP".equalsIgnoreCase(admit.getPatientType()))) {
+                PatientDetail patientDetail = getPatientDetailById(admit);
+                if (patientDetail != null) {
+                    // Add patient details to the list of live patients
+                    livePatients.add(patientDetail);
+                }
+            }
+        }
+
+        // Set the response
+        response.setResponse(livePatients);
+        return response;
+    }
+
+    DateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
+    // Fetches patient details from Admit and Patient entities and constructs a PatientDetail object
+    private PatientDetail getPatientDetailById(Admit admit) {
+        Optional<Patient> patientOptional = patientRepo.findById(admit.getPatientId());
+        if (patientOptional.isPresent()) {
+            Patient patient = patientOptional.get();
+            PatientDetail patientDetail = new PatientDetail();
+            patientDetail.setId(patient.getId());
+            patientDetail.setAdmitId(admit.getAdmitId());
+            patientDetail.setFirstName(patient.getFirstName());
+            patientDetail.setLastName(patient.getLastName());
+            patientDetail.setPhone(patient.getPhoneNumber());
+            patientDetail.setGender(patient.getGender());
+            patientDetail.setBlood(patient.getBloodGroup());
+            patientDetail.setWardNo(patient.getWardNo());
+            patientDetail.setAddress(patient.getAddress());
+            patientDetail.setBirthDate(dateFormat.format(patient.getBirthDate()));
+//            patientDetail.set(admit.getDate().format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss.SSSSSS")));
+            return patientDetail;
+        }
+        return null;
     }
 
 }

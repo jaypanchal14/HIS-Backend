@@ -1,6 +1,7 @@
 package org.his.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.his.bean.PatientResponse;
 import org.his.bean.PersonalDetail;
 import org.his.bean.PersonalDetailResp;
 import org.his.bean.ScheduleDetailResp;
@@ -51,6 +52,20 @@ public class CommonController {
             return new ResponseEntity<>(resp, HttpStatus.OK);
         } else {
             return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @GetMapping("/viewLivePatients")
+    public ResponseEntity<PatientResponse> viewLivePatients(
+            @RequestParam(name="role") String role,
+            @RequestParam(name="isOP") int isOP,
+            @RequestParam(name="id") String id
+    ){
+        PatientResponse response = service.viewLivePatients(role, id, isOP);
+        if (response.getResponse() != null) {
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
     }
 
