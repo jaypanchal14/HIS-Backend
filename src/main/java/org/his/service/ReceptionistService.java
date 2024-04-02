@@ -111,7 +111,6 @@ public class ReceptionistService {
             response.setError("All required fields must be provided.");
             return response;
         }
-
         // Set patient details
         patient.setId(patientDetail.getId());
         patient.setFirstName(patientDetail.getFirstName());
