@@ -100,10 +100,11 @@ public class CommonService {
 
     private PersonalDetail getDetailForReceptionist(Receptionist receptionist) {
         PersonalDetail obj = new PersonalDetail();
+        obj.setRole("RECEPTIONIST");
         obj.setFirstName(receptionist.getFirstName());
         obj.setLastName(receptionist.getLastName());
         obj.setAddress(receptionist.getAddress());
-        obj.setBirthDate(receptionist.getBirthDate());
+        obj.setBirthDate(receptionist.getBirthDate().toString());
         obj.setBlood(receptionist.getBloodGroup());
         obj.setGender(receptionist.getGender());
         obj.setPhone(receptionist.getPhoneNumber());
@@ -113,10 +114,11 @@ public class CommonService {
 
     private PersonalDetail getDetailForPharma(Pharma pharma) {
         PersonalDetail obj = new PersonalDetail();
+        obj.setRole("PHARMACIST");
         obj.setFirstName(pharma.getFirstName());
         obj.setLastName(pharma.getLastName());
         obj.setAddress(pharma.getAddress());
-        obj.setBirthDate(pharma.getBirthDate());
+        obj.setBirthDate(pharma.getBirthDate().toString());
         obj.setBlood(pharma.getBloodGroup());
         obj.setGender(pharma.getGender());
         obj.setPhone(pharma.getPhoneNumber());
@@ -126,10 +128,11 @@ public class CommonService {
 
     private PersonalDetail getDetailForDoc(Doctor doctor) {
         PersonalDetail obj = new PersonalDetail();
+        obj.setRole("DOCTOR");
         obj.setFirstName(doctor.getFirstName());
         obj.setLastName(doctor.getLastName());
         obj.setAddress(doctor.getAddress());
-        obj.setBirthDate(doctor.getBirthDate());
+        obj.setBirthDate(doctor.getBirthDate().toString());
         obj.setBlood(doctor.getBloodGroup());
         obj.setGender(doctor.getGender());
         obj.setDepartment(doctor.getDepartment());
@@ -142,10 +145,11 @@ public class CommonService {
 
     private PersonalDetail getDetailForNurse(Nurse nurse) {
         PersonalDetail obj = new PersonalDetail();
+        obj.setRole("NURSE");
         obj.setFirstName(nurse.getFirstName());
         obj.setLastName(nurse.getLastName());
         obj.setAddress(nurse.getAddress());
-        obj.setBirthDate(nurse.getBirthDate());
+        obj.setBirthDate(nurse.getBirthDate().toString());
         obj.setBlood(nurse.getBloodGroup());
         obj.setGender(nurse.getGender());
         obj.setHead(nurse.isHead());
@@ -157,10 +161,11 @@ public class CommonService {
 
     private PersonalDetail getDetailForAdmin(Admin admin) {
         PersonalDetail obj = new PersonalDetail();
+        obj.setRole("ADMIN");
         obj.setFirstName(admin.getFirstName());
         obj.setLastName(admin.getLastName());
         obj.setAddress(admin.getAddress());
-        obj.setBirthDate(admin.getBirthDate());
+        obj.setBirthDate(admin.getBirthDate().toString());
         obj.setBlood(admin.getBloodGroup());
         obj.setGender(admin.getGender());
         obj.setPhone(admin.getPhoneNumber());

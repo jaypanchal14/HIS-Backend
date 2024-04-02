@@ -78,7 +78,7 @@ public class ReceptionistService {
             detail.setGender(doctor.getGender());
             detail.setBlood(doctor.getBloodGroup());
             detail.setAddress(doctor.getAddress());
-            detail.setBirthDate(doctor.getBirthDate());
+            detail.setBirthDate(doctor.getBirthDate().toString());
             System.out.println(detail.getBirthDate());
             detail.setProfileImage(doctor.getProfileImage());
 

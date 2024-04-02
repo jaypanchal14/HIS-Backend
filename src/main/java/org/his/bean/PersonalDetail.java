@@ -14,7 +14,7 @@ public class PersonalDetail {
     private String email;
     private String phone;
     private String gender;
-    private Date birthDate;
+    private String birthDate;
     private String blood;
     private String specialization;
     private String department;
@@ -25,6 +25,7 @@ public class PersonalDetail {
     //Only for head-nurse
     private boolean isHead;
     //Used by admin for checking
+    private String role;
     private String userId;
     private boolean isActive;
 

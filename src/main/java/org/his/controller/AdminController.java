@@ -45,4 +45,11 @@ public class AdminController {
         return ResponseEntity.status(HttpStatus.OK).body(resp);
     }
 
+    @PostMapping("/admin/addUser")
+    public ResponseEntity<?> addUser(@RequestBody NewUserRequest request, @RequestParam String adminId){
+        log.info("Request received to add new user by admin.");
+        GeneralResp resp = adminService.addNewUser(request, adminId);
+        return ResponseEntity.status(HttpStatus.OK).body(resp);
+    }
+
 }

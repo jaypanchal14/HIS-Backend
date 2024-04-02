@@ -36,4 +36,7 @@ public interface LoginRepo extends JpaRepository<Login, String> {
     @Query("SELECT new org.his.bean.RoleCount( l.role ,COUNT(l)) FROM Login l WHERE l.isActive = true GROUP BY l.role")
     public List<RoleCount> countActiveUserByRole();
 
+    @Query("SELECT l FROM Login l WHERE l.userId = ?1 and l.role = ?2 and l.isActive = true")
+    public Optional<Login> checkIfUserIsActive(String userId, String role);
+
 }

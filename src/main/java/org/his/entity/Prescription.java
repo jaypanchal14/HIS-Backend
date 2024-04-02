@@ -1,9 +1,6 @@
 package org.his.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -18,6 +15,7 @@ public class Prescription {
     private String presId;
     private String patientId;
     @Lob
+    @Column(columnDefinition = "TEXT")
     private String medicine;
     private String diagnosisId;
     private String pharmaId;

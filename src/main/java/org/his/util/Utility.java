@@ -1,7 +1,9 @@
 package org.his.util;
 
 import java.security.SecureRandom;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
@@ -42,5 +44,17 @@ public class Utility {
 
     public static String getFormattedOffsetTime(OffsetDateTime odt){
         return odt.format(formatter);
+    }
+
+    public static OffsetDateTime getOffSetStartDateFromString(String date){
+        return LocalDate.parse(date).atStartOfDay().atOffset(ZoneOffset.ofHoursMinutes(5,30));
+    }
+
+    public static OffsetDateTime getOffSetEndDateFromString(String date){
+        return LocalDate.parse(date).plusDays(1).atStartOfDay().atOffset(ZoneOffset.ofHoursMinutes(5,30));
+    }
+
+    public static OffsetDateTime getOffSetDateOf30Days(){
+        return LocalDate.now().minusDays(30).atStartOfDay().atOffset(ZoneOffset.ofHoursMinutes(5,30));
     }
 }

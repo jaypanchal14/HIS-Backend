@@ -78,7 +78,7 @@ public class NurseService {
                 detail.setSpecialization(nurse.getSpecialization());
                 detail.setBlood(nurse.getBloodGroup());
                 detail.setAddress(nurse.getAddress());
-                detail.setBirthDate(nurse.getBirthDate());
+                detail.setBirthDate(nurse.getBirthDate().toString());
                 detail.setProfileImage(nurse.getProfileImage());
                 detail.setHead(nurse.isHead());
                 System.out.println(nurse.isHead());

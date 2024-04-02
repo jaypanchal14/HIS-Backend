@@ -2,7 +2,6 @@ package org.his.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.his.bean.*;
-import org.his.config.Roles;
 import org.his.entity.Login;
 import org.his.entity.user.*;
 import org.his.exception.AuthenticationException;
@@ -262,18 +261,9 @@ public class AdminService {
 
     public RoleCountResp getActiveUserByRole(String adminId) {
         RoleCountResp resp = new RoleCountResp();
-        String msg = null;
         try{
-            if(adminId == null || adminId.isEmpty()){
-                msg = "Empty adminId passed in the request.";
-                throw new AuthenticationException("Empty adminId passed");
-            }
 
-            Optional<Login> optAccount = loginRepo.findAccountByUserId(adminId, "ADMIN");
-            if (optAccount.isEmpty()) {
-                msg = "Not allowed to perform this request";
-                throw new AuthenticationException("User doesn't have the privilege to perform this request.");
-            }
+            validateAdminId(adminId);
 
             List<RoleCount> ls = loginRepo.countActiveUserByRole();
             //resp.setResponse(ls);
@@ -284,9 +274,46 @@ public class AdminService {
             resp.setResponse(m);
         } catch (AuthenticationException e){
             log.error("AuthenticationException occurred while getting active user count: "+e.getMessage());
-            resp.setError(msg);
+            resp.setError(e.getMessage());
         } catch (Exception e){
             log.error("Exception occurred while getting active user count: "+e.getMessage());
+            resp.setError(e.getMessage());
+        }
+        return resp;
+    }
+
+    private void validateAdminId(String adminId) throws AuthenticationException {
+        if(adminId == null || adminId.isEmpty()){
+            throw new AuthenticationException("Empty adminId passed in the request.");
+        }
+
+        Optional<Login> optAccount = loginRepo.checkIfUserIsActive(adminId, "ADMIN");
+        if (optAccount.isEmpty()) {
+            throw new AuthenticationException("User doesn't have the privilege to perform this request.");
+        }
+    }
+
+    public GeneralResp addNewUser(NewUserRequest request, String adminId) {
+        GeneralResp resp = new GeneralResp();
+        try {
+            validateAdminId(adminId);
+
+            //Validate request, by checking mandatory field value
+
+            //Check if user is already inserted with same email-id
+
+            //Prepare beans for respective user
+            //Generate specific userId for them
+            //Add entry in login table
+            //Add entry in specific user-table
+            //Send an email having their respective profile password
+
+            resp.setResponse("SUCCESS");
+        } catch (AuthenticationException e){
+            log.error("AuthenticationException occurred adding new user: "+e.getMessage());
+            resp.setError(e.getMessage());
+        } catch (Exception e){
+            log.error("Exception occurred while adding new user: "+e.getMessage());
             resp.setError(e.getMessage());
         }
         return resp;
