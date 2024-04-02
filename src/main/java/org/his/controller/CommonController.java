@@ -69,4 +69,18 @@ public class CommonController {
         }
     }
 
+    @GetMapping("/viewOneLivePatient")
+    public ResponseEntity<PatientResponse> viewOneLivePatient(
+            @RequestParam(name = "role") String role,
+            @RequestParam(name = "id") String id,
+            @RequestParam(name = "patientId") String patientId
+    ) {
+        PatientResponse response = service.viewOneLivePatient(role, id, patientId);
+        if (response.getResponse() != null) {
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
+    }
+
 }

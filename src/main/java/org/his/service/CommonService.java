@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -428,6 +429,20 @@ public class CommonService {
         return receptionist;
     }
 
+    private boolean isValidNurse(String nurseId) {
+        Nurse nurse = nurseRepo.findById(nurseId).orElse(null);
+        if(nurse == null) {
+            return false;  // Nurse ID not found
+        }
+        return true;
+    }
+    private boolean isValidDoctor(String doctorId) {
+        Doctor doctor = doctorRepo.findById(doctorId).orElse(null);
+        if(doctor == null) {
+            return false;  // Nurse ID not found
+        }
+        return true;
+    }
     public PatientResponse viewLivePatients(String role, String id, int isOP) {
         PatientResponse response = new PatientResponse();
 
@@ -437,6 +452,19 @@ public class CommonService {
             return response;
         }
 
+        if(role.equalsIgnoreCase("NURSE"))
+        {
+            if (!isValidNurse(id)) {
+                response.setError("Invalid nurse credentials or unauthorized access.");
+                return response;
+            }
+        }
+        else {
+            if (!isValidDoctor(id)) {
+                response.setError("Invalid Doctor credentials or unauthorized access.");
+                return response;
+            }
+        }
         List<PatientDetail> livePatients = new ArrayList<>();
 
         // Fetch all admits from the database
@@ -477,6 +505,75 @@ public class CommonService {
             patientDetail.setAddress(patient.getAddress());
             patientDetail.setBirthDate(dateFormat.format(patient.getBirthDate()));
 //            patientDetail.set(admit.getDate().format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss.SSSSSS")));
+            return patientDetail;
+        }
+        return null;
+    }
+
+
+    public PatientResponse viewOneLivePatient(String role, String id, String patientId) {
+        PatientResponse response = new PatientResponse();
+
+        if(role.equalsIgnoreCase("NURSE"))
+        {
+            if (!isValidNurse(id)) {
+                response.setError("Invalid nurse credentials or unauthorized access.");
+                return response;
+            }
+        }
+        else {
+            if (!isValidDoctor(id)) {
+                response.setError("Invalid Doctor credentials or unauthorized access.");
+                return response;
+            }
+        }
+
+        if (!role.equalsIgnoreCase("DOCTOR") && !role.equalsIgnoreCase("NURSE")) {
+            response.setError("Role not supported.");
+            return response;
+        }
+
+        List<PatientDetail> livePatients = new ArrayList<>();
+
+        Optional<Admit> admitOptional = admitRepo.findByPatientId(patientId);
+        if (admitOptional.isPresent()) {
+            Admit admit = admitOptional.get();
+            // Check if the patient is live (isActive)
+            if (admit.isActive()) {
+                // Fetch patient details based on admit's patientId
+                PatientDetail patientDetail = getPatientDetailsById(admit);
+                if (patientDetail != null) {
+                    // Set the response
+                    livePatients.add(patientDetail);
+                    response.setResponse(livePatients);
+                    return response;
+                }
+            } else {
+                response.setError("Patient is not live.");
+                return response;
+            }
+        }
+
+        response.setError("Patient not found or not live.");
+        return response;
+    }
+
+    // Fetches patient details from Admit and Patient entities and constructs a PatientDetail object
+    private PatientDetail getPatientDetailsById(Admit admit) {
+        Optional<Patient> patientOptional = patientRepo.findById(admit.getPatientId());
+        if (patientOptional.isPresent()) {
+            Patient patient = patientOptional.get();
+            PatientDetail patientDetail = new PatientDetail();
+            patientDetail.setId(patient.getId());
+            patientDetail.setAdmitId(admit.getAdmitId());
+            patientDetail.setFirstName(patient.getFirstName());
+            patientDetail.setLastName(patient.getLastName());
+            patientDetail.setPhone(patient.getPhoneNumber());
+            patientDetail.setGender(patient.getGender());
+            patientDetail.setBlood(patient.getBloodGroup());
+            patientDetail.setWardNo(patient.getWardNo());
+            patientDetail.setAddress(patient.getAddress());
+            patientDetail.setBirthDate(patient.getBirthDate().toString());
             return patientDetail;
         }
         return null;
