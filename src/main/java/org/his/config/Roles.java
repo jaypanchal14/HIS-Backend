@@ -5,5 +5,14 @@ public enum Roles {
     DOCTOR,
     NURSE,
     RECEPTIONIST,
-    PHARMACIST
+    PHARMACIST;
+
+    public static boolean isValidRole(String role) {
+        for (Roles r : Roles.values()) {
+            if (r.name().equals(role.toUpperCase())) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

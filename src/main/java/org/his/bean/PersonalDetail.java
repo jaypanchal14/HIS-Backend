@@ -12,11 +12,8 @@ import java.sql.Date;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PersonalDetail {
 
-    @NotBlank
     private String firstName;
-    @NotBlank
     private String lastName;
-    @NotBlank
     private String email;
     private String phone;
     private String gender;

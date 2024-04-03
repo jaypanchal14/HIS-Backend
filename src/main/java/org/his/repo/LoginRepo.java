@@ -40,7 +40,7 @@ public interface LoginRepo extends JpaRepository<Login, String> {
     @Query("SELECT l FROM Login l WHERE l.userId = ?1 and l.role = ?2 and l.isActive = true")
     public Optional<Login> checkIfUserIsActive(String userId, String role);
 
-    @Query("SELECT new org.his.bean.ViewUserIdentifier(l.role, l.userId, l.username) FROM Login l WHERE l.role!=\"ADMIN\" and l.isActive = true")
+    @Query("SELECT new org.his.bean.ViewUserIdentifier(l.role, l.userId, l.username) FROM Login l WHERE l.role!='ADMIN' and l.isActive = true")
     public List<ViewUserIdentifier> getActiveUsers();
 
     @Query("SELECT new org.his.bean.ViewUserIdentifier(l.role, l.userId, l.username) FROM Login l WHERE l.role = ?1 and l.isActive = true")

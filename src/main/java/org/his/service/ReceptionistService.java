@@ -73,7 +73,7 @@ public class ReceptionistService {
             PersonalDetail detail = new PersonalDetail();
             detail.setFirstName(doctor.getFirstName());
             detail.setLastName(doctor.getLastName());
-            detail.setEmail(doctor.getEmail());
+            //detail.setEmail(doctor.getEmail());
             detail.setPhone(doctor.getPhoneNumber());
             detail.setGender(doctor.getGender());
             detail.setBlood(doctor.getBloodGroup());

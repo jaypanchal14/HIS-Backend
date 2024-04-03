@@ -16,7 +16,6 @@ public class Nurse {
 
     @Id
     private String id;
-    private String email;
     private String firstName;
     private String lastName;
     private String gender;
