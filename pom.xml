@@ -52,6 +52,12 @@
 			<artifactId>spring-boot-starter-mail</artifactId>
 		</dependency>
 
+		<!-- For request validation -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-validation</artifactId>
+		</dependency>
+
 		<!-- For request filtering, pre-post processing of the request-->
 <!--		<dependency>-->
 <!--			<groupId>org.springframework.boot</groupId>-->

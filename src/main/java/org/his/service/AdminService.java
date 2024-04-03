@@ -8,9 +8,14 @@ import org.his.exception.AuthenticationException;
 import org.his.exception.NoSuchAccountException;
 import org.his.repo.LoginRepo;
 import org.his.repo.user.*;
+import org.his.util.EmailService;
+import org.his.util.Utility;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Date;
+import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +42,9 @@ public class AdminService {
 
     @Autowired
     private LoginRepo loginRepo;
+
+    @Autowired
+    private EmailService emailService;
 
     public GeneralResp updateSchedule(ScheduleDetail request) {
         GeneralResp resp = new GeneralResp();
@@ -293,27 +301,202 @@ public class AdminService {
         }
     }
 
-    public GeneralResp addNewUser(NewUserRequest request, String adminId) {
+    public GeneralResp addNewUser(NewUserRequest request) {
         GeneralResp resp = new GeneralResp();
         try {
-            validateAdminId(adminId);
+            log.info(request.toString());
+            //Going further, it will be handled by JWT
+            //validateAdminId(adminId);
 
             //Validate request, by checking mandatory field value
+            validateNewUserRequest(request);
 
             //Check if user is already inserted with same email-id
+            Optional<Login> optionalAcc = loginRepo.findById(request.getPersonal().getEmail());
+            if(optionalAcc.isPresent()){
+                throw new Exception("Email-id is already being used, please use another email-id.");
+            }
 
             //Prepare beans for respective user
-            //Generate specific userId for them
+            Login account = getNewAccountFromRequest(request.getPersonal());
             //Add entry in login table
             //Add entry in specific user-table
+            switch (request.getPersonal().getRole().toUpperCase()){
+                case "DOCTOR" : {
+                    Doctor doc = getNewDoctorFromRequest(account, request.getPersonal(), request.getShift());
+                    insertNewDoctor(account, doc);
+                    break;
+                }
+                case "NURSE" : {
+                    Nurse nur = getNewNurseFromRequest(account, request.getPersonal(), request.getShift());
+                    insertNewNurse(account, nur);
+                    break;
+                }
+                case "RECEPTIONIST" : {
+                    Receptionist recep = getNewReceptionistFromRequest(account, request.getPersonal());
+                    insertNewReceptionist(account, recep);
+                    break;
+                }
+                case "PHARMACIST" : {
+                    Pharma pharma = getNewPharmaFromRequest(account, request.getPersonal());
+                    insertNewPharma(account, pharma);
+                    break;
+                }
+                default:
+                    throw new Exception("Undefined role passed in the request.");
+            }
+
             //Send an email having their respective profile password
+            emailService.sendEmailWithPassword(account.getUsername(), account.getPassword());
 
             resp.setResponse("SUCCESS");
-        } catch (AuthenticationException e){
-            log.error("AuthenticationException occurred adding new user: "+e.getMessage());
-            resp.setError(e.getMessage());
+            log.info("User added successfully.");
         } catch (Exception e){
             log.error("Exception occurred while adding new user: "+e.getMessage());
+            resp.setError(e.getMessage());
+            resp.setResponse("FAILED");
+        }
+        return resp;
+    }
+
+    @Transactional
+    void insertNewDoctor(Login account, Doctor doc) {
+        loginRepo.save(account);
+        doctorRepo.save(doc);
+    }
+
+    @Transactional
+    void insertNewNurse(Login account, Nurse nur) {
+        loginRepo.save(account);
+        nurseRepo.save(nur);
+    }
+
+    @Transactional
+    void insertNewReceptionist(Login account, Receptionist recep) {
+        loginRepo.save(account);
+        receptionRepo.save(recep);
+    }
+
+    @Transactional
+    void insertNewPharma(Login account, Pharma pharma) {
+        loginRepo.save(account);
+        pharmaRepo.save(pharma);
+    }
+
+    private Pharma getNewPharmaFromRequest(Login account, PersonalDetail request) {
+        Pharma p = new Pharma();
+        p.setId(account.getUserId());
+        p.setFirstName(request.getFirstName());
+        p.setLastName(request.getLastName());
+        p.setGender(request.getGender());
+        //Need to be added in FIGMA and FrontEnd
+        //n.setBirthDate(Date.valueOf(request.getBirthDate()));
+        p.setPhoneNumber(request.getPhone());
+        p.setBloodGroup(request.getBlood());
+        p.setAddress(request.getAddress());
+        p.setProfileImage(request.getProfileImage());
+        p.setUpdatedAt(OffsetDateTime.now());
+        return p;
+    }
+
+    private Receptionist getNewReceptionistFromRequest(Login account, PersonalDetail request) {
+        Receptionist r = new Receptionist();
+        r.setId(account.getUserId());
+        r.setFirstName(request.getFirstName());
+        r.setLastName(request.getLastName());
+        r.setGender(request.getGender());
+        //Need to be added in FIGMA and FrontEnd
+        //n.setBirthDate(Date.valueOf(request.getBirthDate()));
+        r.setPhoneNumber(request.getPhone());
+        r.setBloodGroup(request.getBlood());
+        r.setAddress(request.getAddress());
+        r.setProfileImage(request.getProfileImage());
+        r.setUpdatedAt(OffsetDateTime.now());
+        return r;
+    }
+
+    private Nurse getNewNurseFromRequest(Login account, PersonalDetail request, Shift shift) {
+        Nurse n = new Nurse();
+        n.setId(account.getUserId());
+        n.setFirstName(request.getFirstName());
+        n.setLastName(request.getLastName());
+        n.setEmail(request.getEmail());
+        n.setGender(request.getGender());
+        //Need to be added in FIGMA and FrontEnd
+        //n.setBirthDate(Date.valueOf(request.getBirthDate()));
+        n.setPhoneNumber(request.getPhone());
+        n.setBloodGroup(request.getBlood());
+        //Need to be added in FIGMA and FrontEnd for doctor and nurse
+        //n.setDepartment(request.getDepartment());
+        n.setExperience(request.getExperience());
+        n.setAddress(request.getAddress());
+        n.setProfileImage(request.getProfileImage());
+        n.setUpdatedAt(OffsetDateTime.now());
+        /*
+        n.setMon(shift.getMon());
+        n.setTue(shift.getTue());
+        n.setWed(shift.getWed());
+        n.setThu(shift.getThu());
+        n.setFri(shift.getFri());
+        n.setSat(shift.getSat());
+        n.setSun(shift.getSun());
+        */return n;
+    }
+
+    private Doctor getNewDoctorFromRequest(Login account, PersonalDetail request, Shift shift) {
+        Doctor doc = new Doctor();
+        doc.setId(account.getUserId());
+        doc.setFirstName(request.getFirstName());
+        doc.setLastName(request.getLastName());
+        doc.setEmail(request.getEmail());
+        doc.setGender(request.getGender());
+        //Need to be added in FIGMA and FrontEnd
+        //doc.setBirthDate(Date.valueOf(request.getBirthDate()));
+        doc.setPhoneNumber(request.getPhone());
+        doc.setBloodGroup(request.getBlood());
+        //Need to be added in FIGMA and FrontEnd for doctor and nurse
+        //doc.setDepartment(request.getDepartment());
+        doc.setExperience(request.getExperience());
+        doc.setAddress(request.getAddress());
+        doc.setProfileImage(request.getProfileImage());
+        doc.setUpdatedAt(OffsetDateTime.now());/*
+        doc.setMon(shift.getMon());
+        doc.setTue(shift.getTue());
+        doc.setWed(shift.getWed());
+        doc.setThu(shift.getThu());
+        doc.setFri(shift.getFri());
+        doc.setSat(shift.getSat());
+        doc.setSun(shift.getSun());*/
+        return doc;
+    }
+
+    private Login getNewAccountFromRequest(PersonalDetail personal) {
+        Login l = new Login();
+        l.setUsername(personal.getEmail());
+        l.setActive(true);
+        l.setPassword(Utility.generateRandomPassword(8));
+        //Generate specific userId for them
+        l.setUserId(Utility.getUniqueId());
+        l.setRole(personal.getRole());
+        l.setUpdatedAt(OffsetDateTime.now());
+        return l;
+    }
+
+    private void validateNewUserRequest(NewUserRequest request) {
+        //Checked by @Valid
+    }
+
+    public ViewUserResponse getUsers(String role) {
+        ViewUserResponse resp = new ViewUserResponse();
+        try{
+            if(role == null || role.isEmpty()){
+                //Fetch all the active-role users
+            }else{
+                //Get specific active-role users
+
+            }
+        } catch (Exception e){
+            log.error("Exception occurred while fetching users by admin : "+e.getMessage());
             resp.setError(e.getMessage());
         }
         return resp;

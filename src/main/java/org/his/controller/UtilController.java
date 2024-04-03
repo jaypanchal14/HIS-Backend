@@ -27,7 +27,7 @@ public class UtilController {
         if(emailService.sendEmail("sample email", "brijesh.prajapati@iiitb.ac.in")){
             return "SENT";
         }else{
-            return "FAILURE";
+            return "FAILED";
         }
     }
 

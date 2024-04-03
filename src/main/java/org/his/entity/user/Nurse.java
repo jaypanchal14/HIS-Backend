@@ -25,7 +25,7 @@ public class Nurse {
     private String bloodGroup;
     private String specialization;
     //store it as number of month
-    private int pastExperience;
+    private int experience;
     private String address;
     private String profileImage;
     private boolean isHead;

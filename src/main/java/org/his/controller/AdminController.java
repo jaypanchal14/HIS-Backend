@@ -1,17 +1,20 @@
 package org.his.controller;
 
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.his.bean.*;
 import org.his.service.AdminService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
 @RequestMapping("/his")
 @CrossOrigin
+@Validated
 public class AdminController {
 
     @Autowired
@@ -46,9 +49,22 @@ public class AdminController {
     }
 
     @PostMapping("/admin/addUser")
-    public ResponseEntity<?> addUser(@RequestBody NewUserRequest request, @RequestParam String adminId){
+    public ResponseEntity<?> addUser(@Valid @RequestBody NewUserRequest request){
         log.info("Request received to add new user by admin.");
-        GeneralResp resp = adminService.addNewUser(request, adminId);
+        GeneralResp resp = adminService.addNewUser(request);
+        if(resp.getError() != null){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(resp);
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(resp);
+    }
+
+    @GetMapping("/admin/viewUsers")
+    public ResponseEntity<?> viewUsers(@RequestParam(required = false) String role){
+        log.info("Request received for viewing the users.");
+        ViewUserResponse resp = adminService.getUsers(role);
+        if(resp.getError() != null){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(resp);
+        }
         return ResponseEntity.status(HttpStatus.OK).body(resp);
     }
 

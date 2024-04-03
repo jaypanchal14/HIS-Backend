@@ -104,7 +104,7 @@ public class LoginService {
         } catch (Exception e) {
             log.error("Exception occurred with msg : " + e.getMessage());
         }
-        resp.setResponse("FAILURE");
+        resp.setResponse("FAILED");
         resp.setError(msg);
         log.error("ChangePassword request failed.");
         return resp;
