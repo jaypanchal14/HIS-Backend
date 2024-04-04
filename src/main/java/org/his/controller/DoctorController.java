@@ -10,7 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/doc")
+@RequestMapping("/his")
 @CrossOrigin
 @Slf4j
 public class DoctorController {
@@ -22,7 +22,7 @@ public class DoctorController {
         this.doctorService = doctorService;
     }
 
-    @GetMapping("/viewPastPatients")
+    @GetMapping("/doc/viewPastPatients")
     public ResponseEntity<PatientResponse> viewLivePatients(
 //            @RequestParam(name="role") String role,
 //            @RequestParam(name="id") String id

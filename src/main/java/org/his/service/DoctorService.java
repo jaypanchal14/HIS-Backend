@@ -1,5 +1,4 @@
 package org.his.service;
-
 import org.his.bean.PatientDetail;
 import org.his.bean.PatientResponse;
 import org.his.entity.user.Patient;
