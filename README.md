@@ -14,7 +14,10 @@ Steps to run :
     <br>
     In case you get issue while creating the user regarding password policy: <br>
     ```SET GLOBAL validate_password.policy=LOW;```
-    <br><br>
+    <br>
+   (d) Select database after logging-in with our user (in our case, "his") : <br>
+    ```USE his;```
+    <br>
 2) Check the properties file, if you have provided all the correct configuration. <br><br>
 3) Run the application with below command : <br>
     ```
@@ -23,6 +26,12 @@ Steps to run :
     <br>
 
 
-Note: (Only for Jay)<br>
+Note: <br>
+Please use below headers whenever needed : <br>
+```
+headers: { "Content-Type": "application/json", "ngrok-skip-browser-warning": "true"}
+```
+<br>
+(Only for Jay)<br>
 For exposing your API to the internet, run below with ngrok : <br>
 ```ngrok http 8090 --domain=present-neat-mako.ngrok-free.app```

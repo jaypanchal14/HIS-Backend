@@ -11,15 +11,15 @@ import lombok.Data;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class NewUserRequest extends Shift{
 
-    @NotBlank
+    //@NotBlank
     private String firstName;
-    @NotBlank
+    //@NotBlank
     private String lastName;
-    @NotBlank
+    //@NotBlank
     private String email;
     private String phone;
     private String gender;
-    @NotBlank
+    //@NotBlank
     private String birthDate;
     private String blood;
     private String specialization;
@@ -30,7 +30,7 @@ public class NewUserRequest extends Shift{
 
     //Only for head-nurse
     private boolean isHead;
-    @NotBlank
+    //@NotBlank
     private String role;
 
 }

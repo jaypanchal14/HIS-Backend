@@ -14,6 +14,10 @@ import java.util.Optional;
 
 public interface LoginRepo extends JpaRepository<Login, String> {
 
+
+    @Query("SELECT l FROM Login l where l.username = ?1")
+    public Optional<Login> findByUserDetail(String username);
+
     //Below method is equivalent to findById
     @Query("SELECT l FROM Login l where l.username = ?1 and l.role = ?2")
     public Optional<Login> findAccountByUsername(String username, String role);

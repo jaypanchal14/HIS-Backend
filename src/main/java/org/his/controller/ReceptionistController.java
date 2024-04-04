@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/reception")
+@RequestMapping("/his")
 public class ReceptionistController {
 
     private final ReceptionistService receptionistService;
@@ -18,7 +18,7 @@ public class ReceptionistController {
         this.receptionistService = receptionistService;
     }
 
-    @GetMapping("/viewSchedule")
+    @GetMapping("/reception/viewSchedule")
     public ResponseEntity<ReceptionDetailResp> viewSchedule(
             @RequestParam("role") String role,
             @RequestParam("id") String id
@@ -31,7 +31,7 @@ public class ReceptionistController {
         }
     }
 
-    @PostMapping("/registerPatient/{receptionistId}")
+    @PostMapping("/reception/registerPatient/{receptionistId}")
     public ResponseEntity<GeneralResp> registerPatient(
             @PathVariable String receptionistId,
             @ModelAttribute PatientDetail patientDetail
@@ -44,7 +44,7 @@ public class ReceptionistController {
         }
     }
 
-    @PostMapping("/isPatientPresent")
+    @PostMapping("/reception/isPatientPresent")
     public ResponseEntity<PatientResponse> isPatientPresent(@RequestBody PatientDetail patientDetail) {
         PatientResponse response = receptionistService.isPatientPresent(patientDetail);
         if (response.getResponse() != null) {

@@ -1,5 +1,10 @@
 package org.his.util;
 
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -56,5 +61,28 @@ public class Utility {
 
     public static OffsetDateTime getOffSetDateOf30Days(){
         return LocalDate.now().minusDays(30).atStartOfDay().atOffset(ZoneOffset.ofHoursMinutes(5,30));
+    }
+
+    public static boolean isImage(Path filePath) throws IOException {
+        String mimeType = Files.probeContentType(filePath);
+        // Check if the MIME type starts with "image/"
+        return mimeType != null && mimeType.startsWith("image/");
+    }
+
+    public static String getFileExtension(MultipartFile file) {
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename != null) {
+            int dotIndex = originalFilename.lastIndexOf('.');
+            if (dotIndex > 0 && dotIndex < originalFilename.length() - 1) {
+                return originalFilename.substring(dotIndex);
+            }
+        }
+        return null;
+    }
+
+    public static String generateNewImageName(String extension){
+        String str = UUID.randomUUID().toString();
+        str = str.replace("-","").substring(0,15);
+        return str+System.currentTimeMillis()+extension;
     }
 }

@@ -23,6 +23,8 @@ public class PersonalDetail {
     private String department;
     private int experience;
     private String address;
+
+    //This would be in Base64 encoded string
     private String profileImage;
 
     //Only for head-nurse

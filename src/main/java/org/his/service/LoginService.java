@@ -7,11 +7,13 @@ import org.his.bean.GeneralResp;
 import org.his.entity.Login;
 import org.his.exception.AuthenticationException;
 import org.his.repo.LoginRepo;
+import org.his.security.JwtUtils;
 import org.his.util.EmailService;
 import org.his.util.Utility;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.Optional;
 
 @Slf4j
@@ -23,6 +25,9 @@ public class LoginService {
 
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private JwtUtils jwtUtils;
 
     public AuthResponse authenticate(AuthRequest request) {
         AuthResponse resp = new AuthResponse();
@@ -43,7 +48,7 @@ public class LoginService {
             if (request.getPassword().equals(account.getPassword())) {
                 if (account.isActive()) {
                     log.info("User authenticated successfully.");
-                    //resp.setToken(getJWTToken(optAccount.get()));
+                    resp.setToken(jwtUtils.generateToken(request.getUsername(), Collections.singletonList(request.getRole())));
                     resp.setResponse("SUCCESS");
                     resp.setUserId(account.getUserId());
                     return resp;

@@ -4,10 +4,16 @@ import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.his.bean.*;
 import org.his.service.AdminService;
+import org.his.util.Utility;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.nio.file.Path;
 
 @Slf4j
 @RestController
@@ -46,10 +52,11 @@ public class AdminController {
         return ResponseEntity.status(HttpStatus.OK).body(resp);
     }
 
-    @PostMapping("/admin/addUser")
-    public ResponseEntity<?> addUser(@Valid @RequestBody NewUserRequest request){
+    @PostMapping(path = "/admin/addUser")
+    public ResponseEntity<?> tryImage(@RequestPart(name = "image")MultipartFile image, @RequestParam(name = "request") String request){
         log.info("Request received to add new user by admin.");
-        GeneralResp resp = adminService.addNewUser(request);
+        //log.info("Request body : "+request);
+        GeneralResp resp = adminService.addNewUser(request, image);
         if(resp.getError() != null){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(resp);
         }
@@ -61,6 +68,15 @@ public class AdminController {
         log.info("Request received for viewing the users.");
         ViewUserResponse resp = adminService.getUsers(role);
         if(resp.getError() != null){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(resp);
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(resp);
+    }
+
+    @GetMapping("/tryimage")
+    public ResponseEntity<?> tryImage(){
+        String resp = adminService.tryImage();
+        if(resp == null || resp.isEmpty()){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(resp);
         }
         return ResponseEntity.status(HttpStatus.OK).body(resp);

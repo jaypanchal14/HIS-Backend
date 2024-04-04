@@ -1,5 +1,6 @@
 package org.his.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.his.bean.*;
 import org.his.config.Roles;
@@ -13,12 +14,11 @@ import org.his.util.EmailService;
 import org.his.util.Utility;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.sql.Date;
+import java.nio.file.Path;
 import java.time.OffsetDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -48,6 +48,12 @@ public class AdminService {
 
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Autowired
+    FilesStorageService fileService;
 
     public GeneralResp updateSchedule(ScheduleDetail request) {
         GeneralResp resp = new GeneralResp();
@@ -304,12 +310,16 @@ public class AdminService {
         }
     }
 
-    public GeneralResp addNewUser(NewUserRequest request) {
+    public GeneralResp addNewUser(String payload, MultipartFile file) {
         GeneralResp resp = new GeneralResp();
+        NewUserRequest request = null;
+        String profileImage = null;
         try {
-            log.info(request.toString());
-            //Going further, it will be handled by JWT
-            //validateAdminId(adminId);
+
+            if(file == null || file.isEmpty() || !Utility.isImage(Path.of(file.getOriginalFilename()))){
+                throw new Exception("Pass valid profile-image");
+            }
+            request = objectMapper.readValue(payload, NewUserRequest.class);
 
             //Validate request, by checking mandatory field value
             validateNewUserRequest(request);
@@ -319,6 +329,11 @@ public class AdminService {
             if(optionalAcc.isPresent()){
                 throw new Exception("Email-id is already being used, please use another email-id.");
             }
+
+            //Profile-image handling
+            String extension = Utility.getFileExtension(file);
+            profileImage = Utility.generateNewImageName(extension);
+            request.setProfileImage(profileImage);
 
             //Prepare beans for respective user
             Login account = getNewAccountFromRequest(request);
@@ -349,6 +364,7 @@ public class AdminService {
                     throw new Exception("Undefined role passed in the request.");
             }
 
+            fileService.saveImage(file, profileImage);
             //Send an email having their respective profile password
             emailService.sendEmailWithPassword(account.getUsername(), account.getPassword());
 
@@ -488,8 +504,7 @@ public class AdminService {
                 identifiers = loginRepo.getActiveUsersBasedOnRole(role);
             }
             mapping = getRoleBasedMappingsFromIdentifiers(identifiers);
-            ls = getUsersDetailsFromMapping(mapping);
-            resp.setResponse(ls);
+            getUsersDetailsFromMapping(mapping, resp);
             log.info("Request processed successfully for fetching active users.");
         } catch (Exception e){
             log.error("Exception occurred while fetching users by admin : "+e.getMessage());
@@ -498,17 +513,20 @@ public class AdminService {
         return resp;
     }
 
-    private List<PersonalDetail> getUsersDetailsFromMapping(RoleBasedMapping mapping) {
-        List<PersonalDetail> ls = new ArrayList<>();
+    private void getUsersDetailsFromMapping(RoleBasedMapping mapping, ViewUserResponse resp) {
+        List<PersonalDetail> doctor = new ArrayList<>();
+        List<PersonalDetail> nurse = new ArrayList<>();
+        List<PersonalDetail> pharmacist = new ArrayList<>();
+        List<PersonalDetail> receptionist = new ArrayList<>();
         List<String> userIds;
-        List<Doctor> docs = null;
-        List<Nurse> nurses = null;
-        List<Pharma> pharms = null;
-        List<Receptionist> recep = null;
+        List<Doctor> docIds;
+        List<Nurse> nurseIds;
+        List<Pharma> pharmaIds;
+        List<Receptionist> receptionIds;
         if(!mapping.getDoctors().isEmpty()){
             userIds = mapping.getDoctors().keySet().stream().toList();
-            docs = doctorRepo.findAllByIdIn(userIds);
-            for(Doctor doc : docs){
+            docIds = doctorRepo.findAllByIdIn(userIds);
+            for(Doctor doc : docIds){
                 PersonalDetail detail = mapping.getDoctors().get(doc.getId());
                 detail.setFirstName(doc.getFirstName());
                 detail.setLastName(doc.getLastName());
@@ -516,17 +534,16 @@ public class AdminService {
                 detail.setGender(doc.getGender());
                 detail.setBlood(doc.getBloodGroup());
                 detail.setAddress(doc.getAddress());
+                detail.setActive(true);
                 detail.setBirthDate(doc.getBirthDate().toString());
-                ls.add(detail);
+                doctor.add(detail);
             }
         }
 
         if(!mapping.getNurses().isEmpty()){
             userIds = mapping.getNurses().keySet().stream().toList();
-            System.out.println("Inside mapping nurse with size:"+userIds.size());
-            nurses = nurseRepo.findAllByIdIn(userIds);
-            System.out.println("Inside mapping nurse with size:"+nurses.size());
-            for(Nurse n : nurses){
+            nurseIds = nurseRepo.findAllByIdIn(userIds);
+            for(Nurse n : nurseIds){
                 PersonalDetail detail = mapping.getNurses().get(n.getId());
                 detail.setFirstName(n.getFirstName());
                 detail.setLastName(n.getLastName());
@@ -534,15 +551,16 @@ public class AdminService {
                 detail.setGender(n.getGender());
                 detail.setBlood(n.getBloodGroup());
                 detail.setAddress(n.getAddress());
+                detail.setActive(true);
                 detail.setBirthDate(n.getBirthDate().toString());
-                ls.add(detail);
+                nurse.add(detail);
             }
         }
 
         if(!mapping.getPharmacists().isEmpty()){
             userIds = mapping.getPharmacists().keySet().stream().toList();
-            pharms = pharmaRepo.findAllByIdIn(userIds);
-            for(Pharma p : pharms){
+            pharmaIds = pharmaRepo.findAllByIdIn(userIds);
+            for(Pharma p : pharmaIds){
                 PersonalDetail detail = mapping.getPharmacists().get(p.getId());
                 detail.setFirstName(p.getFirstName());
                 detail.setLastName(p.getLastName());
@@ -550,15 +568,16 @@ public class AdminService {
                 detail.setGender(p.getGender());
                 detail.setBlood(p.getBloodGroup());
                 detail.setAddress(p.getAddress());
+                detail.setActive(true);
                 detail.setBirthDate(p.getBirthDate().toString());
-                ls.add(detail);
+                pharmacist.add(detail);
             }
         }
 
         if(!mapping.getReceptionists().isEmpty()){
             userIds = mapping.getReceptionists().keySet().stream().toList();
-            recep = receptionRepo.findAllByIdIn(userIds);
-            for(Receptionist r : recep){
+            receptionIds = receptionRepo.findAllByIdIn(userIds);
+            for(Receptionist r : receptionIds){
                 PersonalDetail detail = mapping.getReceptionists().get(r.getId());
                 detail.setFirstName(r.getFirstName());
                 detail.setLastName(r.getLastName());
@@ -566,12 +585,15 @@ public class AdminService {
                 detail.setGender(r.getGender());
                 detail.setBlood(r.getBloodGroup());
                 detail.setAddress(r.getAddress());
+                detail.setActive(true);
                 detail.setBirthDate(r.getBirthDate().toString());
-                ls.add(detail);
+                receptionist.add(detail);
             }
         }
-        System.out.println("Before returning size:"+ls.size());
-        return ls;
+        resp.setDoctor(doctor);
+        resp.setNurse(nurse);
+        resp.setPharmacist(pharmacist);
+        resp.setReceptionist(receptionist);
     }
 
     private RoleBasedMapping getRoleBasedMappingsFromIdentifiers(List<ViewUserIdentifier> identifiers) {
@@ -601,11 +623,14 @@ public class AdminService {
 
             }
         }
-
         mapping.setDoctors(doctors);
         mapping.setNurses(nurses);
         mapping.setPharmacists(pharmacists);
         mapping.setReceptionists(receptionists);
         return mapping;
+    }
+
+    public String tryImage() {
+        return fileService.loadImage("ff237a5b4fd14871712229626350.png");
     }
 }

@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.io.UnsupportedEncodingException;
 
 @RestController
-@RequestMapping("/nurse")
+@RequestMapping("/his")
 public class NurseController {
 
     private final NurseService nurseService;
@@ -21,7 +21,7 @@ public class NurseController {
         this.nurseService = nurseService;
     }
 
-    @GetMapping("/onShiftNurse")
+    @GetMapping("/nurse/onShiftNurse")
     public ResponseEntity<ReceptionDetailResp> onShiftNurse(
             @RequestParam("role") String role,
             @RequestParam("id") String id
@@ -34,7 +34,7 @@ public class NurseController {
         }
     }
 
-    @GetMapping("/getWard")
+    @GetMapping("/nurse/getWard")
     public ResponseEntity<WardResponse> getWardDetails(
             @RequestParam("role") String role,
             @RequestParam("id") String id
@@ -47,7 +47,7 @@ public class NurseController {
         }
     }
 
-    @PostMapping("/updateWard/{nurseId}")
+    @PostMapping("/nurse/updateWard/{nurseId}")
     public ResponseEntity<GeneralResp> updateWard(
             @PathVariable("nurseId") String nurseId,
             @RequestBody PatientDetail patientDetail

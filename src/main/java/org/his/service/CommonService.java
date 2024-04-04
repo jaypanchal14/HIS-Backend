@@ -9,6 +9,7 @@ import org.his.exception.AuthenticationException;
 import org.his.repo.AdmitRepo;
 import org.his.repo.LoginRepo;
 import org.his.repo.user.*;
+import org.his.util.Utility;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -46,6 +47,9 @@ public class CommonService {
 
     @Autowired
     private AdmitRepo admitRepo;
+
+    @Autowired
+    private FilesStorageService fileService;
 
     public PersonalDetailResp getPersonalDetail(String id, String role){
         PersonalDetailResp resp = new PersonalDetailResp();
@@ -118,7 +122,8 @@ public class CommonService {
         obj.setBlood(receptionist.getBloodGroup());
         obj.setGender(receptionist.getGender());
         obj.setPhone(receptionist.getPhoneNumber());
-        obj.setProfileImage(receptionist.getProfileImage());
+        //obj.setProfileImage(receptionist.getProfileImage());
+        obj.setProfileImage(fileService.loadImage(receptionist.getProfileImage()));
         return obj;
     }
 
@@ -132,7 +137,8 @@ public class CommonService {
         obj.setBlood(pharma.getBloodGroup());
         obj.setGender(pharma.getGender());
         obj.setPhone(pharma.getPhoneNumber());
-        obj.setProfileImage(pharma.getProfileImage());
+        //obj.setProfileImage(pharma.getProfileImage());
+        obj.setProfileImage(fileService.loadImage(pharma.getProfileImage()));
         return obj;
     }
 
@@ -149,7 +155,8 @@ public class CommonService {
         obj.setExperience(doctor.getExperience());
         obj.setSpecialization(doctor.getSpecialization());
         obj.setPhone(doctor.getPhoneNumber());
-        obj.setProfileImage(doctor.getProfileImage());
+        //obj.setProfileImage(doctor.getProfileImage());
+        obj.setProfileImage(fileService.loadImage(doctor.getProfileImage()));
         return obj;
     }
 
@@ -165,7 +172,8 @@ public class CommonService {
         obj.setHead(nurse.isHead());
         obj.setSpecialization(nurse.getSpecialization());
         obj.setPhone(nurse.getPhoneNumber());
-        obj.setProfileImage(nurse.getProfileImage());
+        //obj.setProfileImage(nurse.getProfileImage());
+        obj.setProfileImage(fileService.loadImage(nurse.getProfileImage()));
         return obj;
     }
 
@@ -179,7 +187,7 @@ public class CommonService {
         obj.setBlood(admin.getBloodGroup());
         obj.setGender(admin.getGender());
         obj.setPhone(admin.getPhoneNumber());
-        obj.setProfileImage(admin.getProfileImage());
+        obj.setProfileImage(fileService.loadImage(admin.getProfileImage()));
         return obj;
     }
 
