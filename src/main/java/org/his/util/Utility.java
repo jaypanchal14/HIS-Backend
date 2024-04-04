@@ -16,7 +16,7 @@ public class Utility {
 
     public static String getUniqueId(){
         String str = UUID.randomUUID().toString();
-        str = str.replace("-","").substring(0,16);
+        str = str.replace("-","").substring(0,17);
         return str+System.currentTimeMillis();
     }
 
@@ -31,10 +31,10 @@ public class Utility {
         return sb.toString();
     }
 
-    public static String initialForgotPass = "Hello User, \n" +
+    public static String initialForgotPass = "Hello User, \n\n" +
             "Please use the below generated password for logging-in.\n" +
             "PASSWORD : ";
-    public static String endForgotPass = "\n" +
+    public static String endForgotPass = "\n\n\n" +
             "Regards, \n" +
             "HIS-Admin";
 

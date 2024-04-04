@@ -16,7 +16,6 @@ public class Doctor {
     private String id;
     private String firstName;
     private String lastName;
-    private String email;
     private String gender;
     private Date birthDate;
     private String phoneNumber;

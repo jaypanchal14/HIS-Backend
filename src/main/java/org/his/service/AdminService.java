@@ -2,19 +2,23 @@ package org.his.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.his.bean.*;
+import org.his.config.Roles;
 import org.his.entity.Login;
 import org.his.entity.user.*;
 import org.his.exception.AuthenticationException;
 import org.his.exception.NoSuchAccountException;
 import org.his.repo.LoginRepo;
 import org.his.repo.user.*;
+import org.his.util.EmailService;
+import org.his.util.Utility;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.sql.Date;
+import java.time.OffsetDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -37,6 +41,13 @@ public class AdminService {
 
     @Autowired
     private LoginRepo loginRepo;
+
+    //Added for transactional methods (which needs to be performed under same session
+    @Autowired
+    private TransactionalService transService;
+
+    @Autowired
+    private EmailService emailService;
 
     public GeneralResp updateSchedule(ScheduleDetail request) {
         GeneralResp resp = new GeneralResp();
@@ -293,29 +304,308 @@ public class AdminService {
         }
     }
 
-    public GeneralResp addNewUser(NewUserRequest request, String adminId) {
+    public GeneralResp addNewUser(NewUserRequest request) {
         GeneralResp resp = new GeneralResp();
         try {
-            validateAdminId(adminId);
+            log.info(request.toString());
+            //Going further, it will be handled by JWT
+            //validateAdminId(adminId);
 
             //Validate request, by checking mandatory field value
+            validateNewUserRequest(request);
 
             //Check if user is already inserted with same email-id
+            Optional<Login> optionalAcc = loginRepo.findById(request.getEmail());
+            if(optionalAcc.isPresent()){
+                throw new Exception("Email-id is already being used, please use another email-id.");
+            }
 
             //Prepare beans for respective user
-            //Generate specific userId for them
+            Login account = getNewAccountFromRequest(request);
             //Add entry in login table
             //Add entry in specific user-table
+            switch (request.getRole()){
+                case "DOCTOR" : {
+                    Doctor doc = getNewDoctorFromRequest(account, request);
+                    transService.insertNewDoctor(account, doc);
+                    break;
+                }
+                case "NURSE" : {
+                    Nurse nur = getNewNurseFromRequest(account, request);
+                    transService.insertNewNurse(account, nur);
+                    break;
+                }
+                case "RECEPTIONIST" : {
+                    Receptionist recep = getNewReceptionistFromRequest(account, request);
+                    transService.insertNewReceptionist(account, recep);
+                    break;
+                }
+                case "PHARMACIST" : {
+                    Pharma pharma = getNewPharmaFromRequest(account, request);
+                    transService.insertNewPharma(account, pharma);
+                    break;
+                }
+                default:
+                    throw new Exception("Undefined role passed in the request.");
+            }
+
             //Send an email having their respective profile password
+            emailService.sendEmailWithPassword(account.getUsername(), account.getPassword());
 
             resp.setResponse("SUCCESS");
-        } catch (AuthenticationException e){
-            log.error("AuthenticationException occurred adding new user: "+e.getMessage());
-            resp.setError(e.getMessage());
+            log.info("User added successfully.");
         } catch (Exception e){
             log.error("Exception occurred while adding new user: "+e.getMessage());
             resp.setError(e.getMessage());
+            resp.setResponse("FAILED");
         }
         return resp;
+    }
+
+    private Pharma getNewPharmaFromRequest(Login account, NewUserRequest request) {
+        Pharma p = new Pharma();
+        p.setId(account.getUserId());
+        p.setFirstName(request.getFirstName());
+        p.setLastName(request.getLastName());
+        p.setGender(request.getGender());
+        //Need to be added in FIGMA and FrontEnd
+        //n.setBirthDate(Date.valueOf(request.getBirthDate()));
+        p.setPhoneNumber(request.getPhone());
+        p.setBloodGroup(request.getBlood());
+        p.setAddress(request.getAddress());
+        p.setProfileImage(request.getProfileImage());
+        p.setUpdatedAt(OffsetDateTime.now());
+        return p;
+    }
+
+    private Receptionist getNewReceptionistFromRequest(Login account, NewUserRequest request) {
+        Receptionist r = new Receptionist();
+        r.setId(account.getUserId());
+        r.setFirstName(request.getFirstName());
+        r.setLastName(request.getLastName());
+        r.setGender(request.getGender());
+        //Need to be added in FIGMA and FrontEnd
+        //n.setBirthDate(Date.valueOf(request.getBirthDate()));
+        r.setPhoneNumber(request.getPhone());
+        r.setBloodGroup(request.getBlood());
+        r.setAddress(request.getAddress());
+        r.setProfileImage(request.getProfileImage());
+        r.setUpdatedAt(OffsetDateTime.now());
+        return r;
+    }
+
+    private Nurse getNewNurseFromRequest(Login account, NewUserRequest request) {
+        Nurse n = new Nurse();
+        n.setId(account.getUserId());
+        n.setFirstName(request.getFirstName());
+        n.setLastName(request.getLastName());
+        //n.setEmail(request.getEmail());
+        n.setGender(request.getGender());
+        //Need to be added in FIGMA and FrontEnd
+        //n.setBirthDate(Date.valueOf(request.getBirthDate()));
+        n.setPhoneNumber(request.getPhone());
+        n.setBloodGroup(request.getBlood());
+        //Need to be added in FIGMA and FrontEnd for doctor and nurse
+        //n.setDepartment(request.getDepartment());
+        n.setExperience(request.getExperience());
+        n.setAddress(request.getAddress());
+        n.setProfileImage(request.getProfileImage());
+        n.setUpdatedAt(OffsetDateTime.now());
+        /*
+        n.setMon(shift.getMon());
+        n.setTue(shift.getTue());
+        n.setWed(shift.getWed());
+        n.setThu(shift.getThu());
+        n.setFri(shift.getFri());
+        n.setSat(shift.getSat());
+        n.setSun(shift.getSun());
+        */return n;
+    }
+
+    private Doctor getNewDoctorFromRequest(Login account, NewUserRequest request) {
+        Doctor doc = new Doctor();
+        doc.setId(account.getUserId());
+        doc.setFirstName(request.getFirstName());
+        doc.setLastName(request.getLastName());
+        //doc.setEmail(account.getUsername());
+        doc.setGender(request.getGender());
+        //Need to be added in FIGMA and FrontEnd
+        //doc.setBirthDate(Date.valueOf(request.getBirthDate()));
+        doc.setPhoneNumber(request.getPhone());
+        doc.setBloodGroup(request.getBlood());
+        //Need to be added in FIGMA and FrontEnd for doctor and nurse
+        //doc.setDepartment(request.getDepartment());
+        doc.setExperience(request.getExperience());
+        doc.setAddress(request.getAddress());
+        doc.setProfileImage(request.getProfileImage());
+        doc.setUpdatedAt(OffsetDateTime.now());/*
+        doc.setMon(shift.getMon());
+        doc.setTue(shift.getTue());
+        doc.setWed(shift.getWed());
+        doc.setThu(shift.getThu());
+        doc.setFri(shift.getFri());
+        doc.setSat(shift.getSat());
+        doc.setSun(shift.getSun());*/
+        return doc;
+    }
+
+    private Login getNewAccountFromRequest(NewUserRequest personal) {
+        Login l = new Login();
+        l.setUsername(personal.getEmail());
+        l.setActive(true);
+        l.setPassword(Utility.generateRandomPassword(8));
+        //Generate specific userId for them
+        l.setUserId(Utility.getUniqueId());
+        l.setRole(personal.getRole());
+        l.setUpdatedAt(OffsetDateTime.now());
+        return l;
+    }
+
+    private void validateNewUserRequest(NewUserRequest request) {
+        //Checked by @Valid
+
+        //In case they sent it in lower
+        request.setRole(request.getRole().toUpperCase());
+    }
+
+    public ViewUserResponse getUsers(String role) {
+        ViewUserResponse resp = new ViewUserResponse();
+        List<PersonalDetail> ls = null;
+        List<ViewUserIdentifier> identifiers;
+        RoleBasedMapping mapping = null;
+        try{
+            if(role == null || role.isEmpty()){
+                //Fetch all the active-role users
+                identifiers = loginRepo.getActiveUsers();
+
+            }else{
+                //Check if valid role
+                if(!Roles.isValidRole(role)){
+                    throw new Exception("Please pass valid ROLE in the request-param");
+                }
+                role = role.toUpperCase();
+                //Get specific active-role users
+                identifiers = loginRepo.getActiveUsersBasedOnRole(role);
+            }
+            mapping = getRoleBasedMappingsFromIdentifiers(identifiers);
+            ls = getUsersDetailsFromMapping(mapping);
+            resp.setResponse(ls);
+            log.info("Request processed successfully for fetching active users.");
+        } catch (Exception e){
+            log.error("Exception occurred while fetching users by admin : "+e.getMessage());
+            resp.setError(e.getMessage());
+        }
+        return resp;
+    }
+
+    private List<PersonalDetail> getUsersDetailsFromMapping(RoleBasedMapping mapping) {
+        List<PersonalDetail> ls = new ArrayList<>();
+        List<String> userIds;
+        List<Doctor> docs = null;
+        List<Nurse> nurses = null;
+        List<Pharma> pharms = null;
+        List<Receptionist> recep = null;
+        if(!mapping.getDoctors().isEmpty()){
+            userIds = mapping.getDoctors().keySet().stream().toList();
+            docs = doctorRepo.findAllByIdIn(userIds);
+            for(Doctor doc : docs){
+                PersonalDetail detail = mapping.getDoctors().get(doc.getId());
+                detail.setFirstName(doc.getFirstName());
+                detail.setLastName(doc.getLastName());
+                detail.setPhone(doc.getPhoneNumber());
+                detail.setGender(doc.getGender());
+                detail.setBlood(doc.getBloodGroup());
+                detail.setAddress(doc.getAddress());
+                detail.setBirthDate(doc.getBirthDate().toString());
+                ls.add(detail);
+            }
+        }
+
+        if(!mapping.getNurses().isEmpty()){
+            userIds = mapping.getNurses().keySet().stream().toList();
+            System.out.println("Inside mapping nurse with size:"+userIds.size());
+            nurses = nurseRepo.findAllByIdIn(userIds);
+            System.out.println("Inside mapping nurse with size:"+nurses.size());
+            for(Nurse n : nurses){
+                PersonalDetail detail = mapping.getNurses().get(n.getId());
+                detail.setFirstName(n.getFirstName());
+                detail.setLastName(n.getLastName());
+                detail.setPhone(n.getPhoneNumber());
+                detail.setGender(n.getGender());
+                detail.setBlood(n.getBloodGroup());
+                detail.setAddress(n.getAddress());
+                detail.setBirthDate(n.getBirthDate().toString());
+                ls.add(detail);
+            }
+        }
+
+        if(!mapping.getPharmacists().isEmpty()){
+            userIds = mapping.getPharmacists().keySet().stream().toList();
+            pharms = pharmaRepo.findAllByIdIn(userIds);
+            for(Pharma p : pharms){
+                PersonalDetail detail = mapping.getPharmacists().get(p.getId());
+                detail.setFirstName(p.getFirstName());
+                detail.setLastName(p.getLastName());
+                detail.setPhone(p.getPhoneNumber());
+                detail.setGender(p.getGender());
+                detail.setBlood(p.getBloodGroup());
+                detail.setAddress(p.getAddress());
+                detail.setBirthDate(p.getBirthDate().toString());
+                ls.add(detail);
+            }
+        }
+
+        if(!mapping.getReceptionists().isEmpty()){
+            userIds = mapping.getReceptionists().keySet().stream().toList();
+            recep = receptionRepo.findAllByIdIn(userIds);
+            for(Receptionist r : recep){
+                PersonalDetail detail = mapping.getReceptionists().get(r.getId());
+                detail.setFirstName(r.getFirstName());
+                detail.setLastName(r.getLastName());
+                detail.setPhone(r.getPhoneNumber());
+                detail.setGender(r.getGender());
+                detail.setBlood(r.getBloodGroup());
+                detail.setAddress(r.getAddress());
+                detail.setBirthDate(r.getBirthDate().toString());
+                ls.add(detail);
+            }
+        }
+        System.out.println("Before returning size:"+ls.size());
+        return ls;
+    }
+
+    private RoleBasedMapping getRoleBasedMappingsFromIdentifiers(List<ViewUserIdentifier> identifiers) {
+        RoleBasedMapping mapping = new RoleBasedMapping();
+        Map<String, PersonalDetail> doctors = new HashMap<>();
+        Map<String, PersonalDetail> nurses = new HashMap<>();
+        Map<String, PersonalDetail> pharmacists = new HashMap<>();
+        Map<String, PersonalDetail> receptionists = new HashMap<>();
+
+        for(ViewUserIdentifier view : identifiers){
+            PersonalDetail detail = new PersonalDetail();
+            detail.setUserId(view.getUserId());
+            detail.setEmail(view.getEmail());
+            if("DOCTOR".equals(view.getRole())){
+                detail.setRole("DOCTOR");
+                doctors.put(view.getUserId(),detail);
+            } else if ("NURSE".equals(view.getRole())) {
+                detail.setRole("NURSE");
+                nurses.put(view.getUserId(),detail);
+            } else if ("RECEPTIONIST".equals(view.getRole())) {
+                detail.setRole("RECEPTIONIST");
+                receptionists.put(view.getUserId(),detail);
+            } else if ("PHARMACIST".equals(view.getRole())) {
+                detail.setRole("PHARMACIST");
+                pharmacists.put(view.getUserId(),detail);
+            } else {
+
+            }
+        }
+
+        mapping.setDoctors(doctors);
+        mapping.setNurses(nurses);
+        mapping.setPharmacists(pharmacists);
+        mapping.setReceptionists(receptionists);
+        return mapping;
     }
 }

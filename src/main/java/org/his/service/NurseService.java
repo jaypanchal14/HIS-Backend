@@ -72,7 +72,8 @@ public class NurseService {
                 PersonalDetail detail = new PersonalDetail();
                 detail.setFirstName(nurse.getFirstName());
                 detail.setLastName(nurse.getLastName());
-                detail.setEmail(nurse.getEmail());
+                //Removing email from the nurse table
+                //detail.setEmail(nurse.getEmail());
                 detail.setPhone(nurse.getPhoneNumber());
                 detail.setGender(nurse.getGender());
                 detail.setSpecialization(nurse.getSpecialization());
