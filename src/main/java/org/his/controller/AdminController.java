@@ -29,38 +29,55 @@ public class AdminController {
     public ResponseEntity<?> updateSchedule(@RequestBody ScheduleDetail request){
         log.info("updateSchedule | Request received for updating schedule");
         GeneralResp resp = adminService.updateSchedule(request);
-        return ResponseEntity.status(HttpStatus.OK).body(resp);
+        if(resp.getResponse().equals("SUCCESS")){
+            return ResponseEntity.status(HttpStatus.OK).body(resp);
+        }else{
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
+        }
     }
 
     @PostMapping("/admin/checkUser")
     public ResponseEntity<?> checkUser(@RequestBody CheckUserReq request){
         log.info("checkUser | Request received to check if user exist or not");
         PersonalDetailResp resp = adminService.checkIfUserExist(request);
-        return ResponseEntity.status(HttpStatus.OK).body(resp);
+        if(resp.getError() != null){
+            return ResponseEntity.status(HttpStatus.OK).body(resp);
+        }else{
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
+        }
     }
 
     @PostMapping("/admin/updateAccountStatus")
     public ResponseEntity<?> updateAccountStatus(@RequestBody UpdateAccStatusReq request){
         log.info("updateAccountStatus | Request received to check if user exist or not");
         GeneralResp resp = adminService.updateAccountStatus(request);
-        return ResponseEntity.status(HttpStatus.OK).body(resp);
+        if(resp.getResponse().equals("SUCCESS")){
+            return ResponseEntity.status(HttpStatus.OK).body(resp);
+        }else{
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
+        }
     }
 
     @GetMapping("/admin/getCount")
     public ResponseEntity<?> countActiveUserByRole(@RequestParam(name="id") String id){
         log.info("countActiveUserByRole | Request received to count active users.");
         RoleCountResp resp = adminService.getActiveUserByRole(id);
-        return ResponseEntity.status(HttpStatus.OK).body(resp);
+        if(resp.getError() != null){
+            return ResponseEntity.status(HttpStatus.OK).body(resp);
+        }else{
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
+        }
     }
 
     @PostMapping(path = "/admin/addUser")
     public ResponseEntity<?> addUser(@RequestPart(name = "image")MultipartFile image, @RequestParam(name = "request") String request){
         log.info("addUser | Request received to add new user by admin.");
         GeneralResp resp = adminService.addNewUser(request, image);
-        if(resp.getError() != null){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(resp);
+        if(resp.getResponse().equals("SUCCESS")){
+            return ResponseEntity.status(HttpStatus.OK).body(resp);
+        }else{
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
         }
-        return ResponseEntity.status(HttpStatus.OK).body(resp);
     }
 
     @GetMapping("/admin/viewUsers")

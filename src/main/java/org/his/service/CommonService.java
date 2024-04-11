@@ -196,7 +196,11 @@ public class CommonService {
                 msg = "Please pass valid email/role.";
                 throw new AuthenticationException("Empty value receives in request");
             }
-
+            role = role.toUpperCase();
+            if(!"DOCTOR".equals(role) && !"NURSE".equals(role)){
+                msg = "Pass correct ROLE of the user.";
+                throw new Exception("Role other than doctor or nurse has been passed in request.");
+            }
             Optional<String> optUserId = loginRepo.findUserIdByUsername(email, role);
             if (optUserId.isEmpty()) {
                 msg = "Email not found in the database.";
@@ -205,16 +209,12 @@ public class CommonService {
 
             String userId = optUserId.get();
             ScheduleDetail detail = null;
-            if(Roles.DOCTOR.toString().equals(role)){
+            if("DOCTOR".equals(role)){
                 Optional<Doctor> doc = doctorRepo.findById(userId);
                 detail = getScheduleDetailForDoc(doc.get(), email);
-            } else if (Roles.NURSE.toString().equals(role)) {
+            } else {
                 Optional<Nurse> nurse = nurseRepo.findById(userId);
                 detail = getScheduleDetailForNurse(nurse.get(), email);
-
-            } else{
-                msg = "Pass correct ROLE of the user.";
-                throw new Exception("Role other than doctor or nurse has been passed in request.");
             }
             resp.setResponse(detail);
             return resp;

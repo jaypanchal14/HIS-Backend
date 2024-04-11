@@ -63,6 +63,7 @@ public class AdminService {
             if(validateScheduleRequest(request)){
                 throw new Exception("Wrong request parameter values.");
             }
+            request.setRole(request.getRole().toUpperCase());
             if("DOCTOR".equals(request.getRole())){
                 Optional<Doctor> optDoc = doctorRepo.findById(request.getUserId());
                 if(optDoc.isEmpty()){
@@ -81,15 +82,16 @@ public class AdminService {
                 msg = "Pass correct ROLE of the user.";
                 throw new Exception("Role other than doctor or nurse has been passed in request.");
             }
+            resp.setResponse("SUCCESS");
 
         } catch (NoSuchAccountException e){
             log.error("NoSuchAccountException occurred with msg : " + e.getMessage());
-
+            resp.setError(msg);
         } catch (Exception e){
             log.error("Exception occurred with msg : " + e.getMessage());
-
+            resp.setError(e.getMessage());
         }
-        resp.setError(msg);
+
         return resp;
     }
 

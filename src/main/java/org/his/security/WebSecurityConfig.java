@@ -36,11 +36,13 @@ public class WebSecurityConfig implements WebMvcConfigurer {
                 .authorizeHttpRequests(Authorize -> Authorize
                         .requestMatchers("/his/authenticate").permitAll()
                         .requestMatchers("/his/forgotPassword").permitAll()
+                        .requestMatchers("/his/changePassword").fullyAuthenticated()
                         .requestMatchers("/his/admin/**").hasAuthority("ADMIN")
                         .requestMatchers("/his/doc/**").hasAuthority("DOCTOR")
                         .requestMatchers("/his/nurse/**").hasAuthority("NURSE")
                         .requestMatchers("/his/pharma/**").hasAuthority("PHARMACIST")
                         .requestMatchers("/his/reception/**").hasAuthority("RECEPTIONIST")
+                        .requestMatchers("/his/patient").hasAnyRole("DOCTOR","NURSE")
                         .requestMatchers("/his/**").fullyAuthenticated()
                         //.requestMatchers("/req/**").hasAnyAuthority("ADMIN","NURSE","DOCTOR")
                 );
