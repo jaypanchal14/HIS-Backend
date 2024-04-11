@@ -26,7 +26,7 @@ public class LoginController {
         if(resp.getResponse().equals("SUCCESS")){
             return ResponseEntity.status(HttpStatus.OK).body(resp);
         }else{
-            return ResponseEntity.status(HttpStatus.ACCEPTED).body(resp);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(resp);
         }
     }
 

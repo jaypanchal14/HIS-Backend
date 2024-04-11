@@ -122,7 +122,6 @@ public class CommonService {
         obj.setBlood(receptionist.getBloodGroup());
         obj.setGender(receptionist.getGender());
         obj.setPhone(receptionist.getPhoneNumber());
-        //obj.setProfileImage(receptionist.getProfileImage());
         obj.setProfileImage(fileService.loadImage(receptionist.getProfileImage()));
         return obj;
     }
@@ -137,7 +136,6 @@ public class CommonService {
         obj.setBlood(pharma.getBloodGroup());
         obj.setGender(pharma.getGender());
         obj.setPhone(pharma.getPhoneNumber());
-        //obj.setProfileImage(pharma.getProfileImage());
         obj.setProfileImage(fileService.loadImage(pharma.getProfileImage()));
         return obj;
     }
@@ -155,7 +153,6 @@ public class CommonService {
         obj.setExperience(doctor.getExperience());
         obj.setSpecialization(doctor.getSpecialization());
         obj.setPhone(doctor.getPhoneNumber());
-        //obj.setProfileImage(doctor.getProfileImage());
         obj.setProfileImage(fileService.loadImage(doctor.getProfileImage()));
         return obj;
     }
@@ -172,7 +169,6 @@ public class CommonService {
         obj.setHead(nurse.isHead());
         obj.setSpecialization(nurse.getSpecialization());
         obj.setPhone(nurse.getPhoneNumber());
-        //obj.setProfileImage(nurse.getProfileImage());
         obj.setProfileImage(fileService.loadImage(nurse.getProfileImage()));
         return obj;
     }
@@ -182,10 +178,10 @@ public class CommonService {
         obj.setRole("ADMIN");
         obj.setFirstName(admin.getFirstName());
         obj.setLastName(admin.getLastName());
+        obj.setGender(admin.getGender());
         obj.setAddress(admin.getAddress());
         obj.setBirthDate(admin.getBirthDate().toString());
         obj.setBlood(admin.getBloodGroup());
-        obj.setGender(admin.getGender());
         obj.setPhone(admin.getPhoneNumber());
         obj.setProfileImage(fileService.loadImage(admin.getProfileImage()));
         return obj;
@@ -266,190 +262,189 @@ public class CommonService {
         return detail;
     }
 
-    public PersonalDetailResp updateProfile(String id, String role, PersonalDetail profileData) {
+    public PersonalDetailResp updateProfile(PersonalDetail request) {
         PersonalDetailResp response = new PersonalDetailResp();
-
-        switch (role) {
-            case "DOCTOR":
-                Optional<Doctor> doctorOptional = doctorRepo.findById(id);
-                if (doctorOptional.isPresent()) {
-                    Doctor doctor = doctorRepo.save(getDoctor(profileData, doctorOptional));
-                    response.setResponse(getDetailForDoc(doctor));
-                } else {
-                    response.setError("Doctor not found.");
+        try {
+            if(request.getRole() == null || request.getRole().isEmpty()){
+                throw new RuntimeException("Empty role passed in the request");
+            }
+            String role = request.getRole().toUpperCase();
+            request.setRole(role);
+            switch (role) {
+                case "ADMIN": {
+                    Optional<Admin> adminOptional = adminRepo.findById(request.getUserId());
+                    if (adminOptional.isPresent()) {
+                        Admin admin = adminRepo.save(getAdmin(request, adminOptional.get()));
+                        response.setResponse(getDetailForAdmin(admin));
+                    } else {
+                        response.setError("Admin not found.");
+                    }
+                    break;
                 }
-                break;
-
-            case "ADMIN":
-                Optional<Admin> adminOptional = adminRepo.findById(id);
-                if (adminOptional.isPresent()) {
-                    Admin admin = adminRepo.save(getAdmin(profileData, adminOptional));
-                    response.setResponse(getDetailForAdmin(admin));
-                } else {
-                    response.setError("Admin not found.");
+                case "DOCTOR": {
+                    Optional<Doctor> doctorOptional = doctorRepo.findById(request.getUserId());
+                    if (doctorOptional.isPresent()) {
+                        Doctor doctor = doctorRepo.save(getDoctor(request, doctorOptional.get()));
+                        response.setResponse(getDetailForDoc(doctor));
+                    } else {
+                        response.setError("Doctor not found.");
+                    }
+                    break;
                 }
-                break;
-
-            case "NURSE":
-                Optional<Nurse> nurseOptional = nurseRepo.findById(id);
-                if (nurseOptional.isPresent()) {
-                    Nurse nurse = nurseRepo.save(getNurse(profileData, nurseOptional));
-                    response.setResponse(getDetailForNurse(nurse));
-                } else {
-                    response.setError("Nurse not found.");
+                case "NURSE": {
+                    Optional<Nurse> nurseOptional = nurseRepo.findById(request.getUserId());
+                    if (nurseOptional.isPresent()) {
+                        Nurse nurse = nurseRepo.save(getNurse(request, nurseOptional.get()));
+                        response.setResponse(getDetailForNurse(nurse));
+                    } else {
+                        response.setError("Nurse not found.");
+                    }
+                    break;
                 }
-                break;
-
-            case "PHARMACIST":
-                Optional<Pharma> pharmaOptional = pharmaRepo.findById(id);
-                if (pharmaOptional.isPresent()) {
-                    Pharma pharma = pharmaRepo.save(getPharmacist(profileData, pharmaOptional));
-                    response.setResponse(getDetailForPharma(pharma));
-                } else {
-                    response.setError("Pharma not found.");
+                case "PHARMACIST": {
+                    Optional<Pharma> pharmaOptional = pharmaRepo.findById(request.getUserId());
+                    if (pharmaOptional.isPresent()) {
+                        Pharma pharma = pharmaRepo.save(getPharmacist(request, pharmaOptional.get()));
+                        response.setResponse(getDetailForPharma(pharma));
+                    } else {
+                        response.setError("Pharma not found.");
+                    }
+                    break;
                 }
-                break;
-
-            case "Receptionist":
-                Optional<Receptionist> receptionistOptional = receptionRepo.findById(id);
-                if (receptionistOptional.isPresent()) {
-                    Receptionist receptionist = receptionRepo.save(getReceptionist(profileData, receptionistOptional));
-                    response.setResponse(getDetailForReceptionist(receptionist));
-                } else {
-                    response.setError("Receptionist not found.");
+                case "RECEPTIONIST": {
+                    Optional<Receptionist> receptionistOptional = receptionRepo.findById(request.getUserId());
+                    if (receptionistOptional.isPresent()) {
+                        Receptionist receptionist = receptionRepo.save(getReceptionist(request, receptionistOptional.get()));
+                        response.setResponse(getDetailForReceptionist(receptionist));
+                    } else {
+                        response.setError("Receptionist not found.");
+                    }
+                    break;
                 }
-                break;
+                default:
+                    response.setError("Role not supported.");
+                    throw new RuntimeException("Invalid role passed in the request");
 
-            default:
-                response.setError("Role not supported.");
+            }
+        }catch (Exception e){
+            log.error("updateProfile : Exception occurred while updating: "+e.getMessage());
+            response.setError(e.getMessage());
         }
 
         return response;
     }
 
-    private static Doctor getDoctor(PersonalDetail profileData, Optional<Doctor> doctorOptional) {
-        Doctor doctor = doctorOptional.get();
-        if (profileData.getFirstName() != null) {
+    private Doctor getDoctor(PersonalDetail profileData, Doctor doctor) {
+        if (profileData.getFirstName() != null && !profileData.getFirstName().isBlank()) {
             doctor.setFirstName(profileData.getFirstName());
         }
-        if (profileData.getLastName() != null) {
+        if (profileData.getLastName() != null && !profileData.getLastName().isBlank()) {
             doctor.setLastName(profileData.getLastName());
         }
-        if (profileData.getPhone() != null) {
+        if (profileData.getPhone() != null && !profileData.getPhone().isBlank()) {
             doctor.setPhoneNumber(profileData.getPhone());
         }
-        if (profileData.getDepartment() != null) {
+        if (profileData.getDepartment() != null && !profileData.getDepartment().isBlank()) {
             doctor.setDepartment(profileData.getDepartment());
         }
-        if (profileData.getSpecialization() != null) {
+        if (profileData.getSpecialization() != null && !profileData.getSpecialization().isBlank()) {
             doctor.setSpecialization(profileData.getSpecialization());
         }
-        if (profileData.getAddress() != null) {
+        if (profileData.getAddress() != null && !profileData.getAddress().isBlank()) {
             doctor.setAddress(profileData.getAddress());
         }
         // Set imagePath if needed
-        if (profileData.getProfileImage() != null) {
-            doctor.setProfileImage(profileData.getProfileImage());
-        }
+//        if (profileData.getProfileImage() != null) {
+//            doctor.setProfileImage(profileData.getProfileImage());
+//        }
         return doctor;
     }
 
-    private static Admin getAdmin(PersonalDetail profileData, Optional<Admin> adminOptional) {
-        Admin admin = adminOptional.get();
-        if (profileData.getFirstName() != null) {
+    private Admin getAdmin(PersonalDetail profileData, Admin admin) {
+        if (profileData.getFirstName() != null && !profileData.getFirstName().isBlank()) {
             admin.setFirstName(profileData.getFirstName());
         }
-        if (profileData.getLastName() != null) {
+        if (profileData.getLastName() != null && !profileData.getLastName().isBlank()) {
             admin.setLastName(profileData.getLastName());
         }
-        if (profileData.getPhone() != null) {
+        if (profileData.getPhone() != null && !profileData.getPhone().isBlank()) {
             admin.setPhoneNumber(profileData.getPhone());
         }
-        if (profileData.getAddress() != null) {
+        if (profileData.getAddress() != null && !profileData.getAddress().isBlank()) {
             admin.setAddress(profileData.getAddress());
         }
         // Set imagePath if needed
-        if (profileData.getProfileImage() != null) {
-            admin.setProfileImage(profileData.getProfileImage());
-        }
+//        if (profileData.getProfileImage() != null) {
+//            admin.setProfileImage(profileData.getProfileImage());
+//        }
         return admin;
     }
 
-    private static Nurse getNurse(PersonalDetail profileData, Optional<Nurse> nurseOptional) {
-        Nurse nurse = nurseOptional.get();
-        if (profileData.getFirstName() != null) {
+    private Nurse getNurse(PersonalDetail profileData, Nurse nurse) {
+        if (profileData.getFirstName() != null && !profileData.getFirstName().isBlank()) {
             nurse.setFirstName(profileData.getFirstName());
         }
-        if (profileData.getLastName() != null) {
+        if (profileData.getLastName() != null && !profileData.getLastName().isBlank()) {
             nurse.setLastName(profileData.getLastName());
         }
-        if (profileData.getPhone() != null) {
+        if (profileData.getPhone() != null && !profileData.getPhone().isBlank()) {
             nurse.setPhoneNumber(profileData.getPhone());
         }
-        if (profileData.getAddress() != null) {
+        if (profileData.getAddress() != null && !profileData.getAddress().isBlank()) {
             nurse.setAddress(profileData.getAddress());
         }
-        if (profileData.getProfileImage() != null) {
-            nurse.setProfileImage(profileData.getProfileImage());
-        }
+//        if (profileData.getProfileImage() != null) {
+//            nurse.setProfileImage(profileData.getProfileImage());
+//        }
         return nurse;
     }
 
-    private static Pharma getPharmacist(PersonalDetail profileData, Optional<Pharma> pharmaOptional) {
-        Pharma pharma = pharmaOptional.get();
-        if (profileData.getFirstName() != null) {
+    private Pharma getPharmacist(PersonalDetail profileData, Pharma pharma) {
+        if (profileData.getFirstName() != null && !profileData.getFirstName().isBlank()) {
             pharma.setFirstName(profileData.getFirstName());
         }
-        if (profileData.getLastName() != null) {
+        if (profileData.getLastName() != null && !profileData.getLastName().isBlank()) {
             pharma.setLastName(profileData.getLastName());
         }
-        if (profileData.getPhone() != null) {
+        if (profileData.getPhone() != null && !profileData.getPhone().isBlank()) {
             pharma.setPhoneNumber(profileData.getPhone());
         }
-        if (profileData.getAddress() != null) {
+        if (profileData.getAddress() != null && !profileData.getAddress().isBlank()) {
             pharma.setAddress(profileData.getAddress());
         }
         // Set imagePath if needed
-        if (profileData.getProfileImage() != null) {
-            pharma.setProfileImage(profileData.getProfileImage());
-        }
+//        if (profileData.getProfileImage() != null) {
+//            pharma.setProfileImage(profileData.getProfileImage());
+//        }
         return pharma;
     }
 
-    private static Receptionist getReceptionist(PersonalDetail profileData, Optional<Receptionist> receptionistOptional) {
-        Receptionist receptionist = receptionistOptional.get();
-        if (profileData.getFirstName() != null) {
+    private Receptionist getReceptionist(PersonalDetail profileData, Receptionist receptionist) {
+        if (profileData.getFirstName() != null && !profileData.getFirstName().isBlank()) {
             receptionist.setFirstName(profileData.getFirstName());
         }
-        if (profileData.getLastName() != null) {
+        if (profileData.getLastName() != null && !profileData.getLastName().isBlank()) {
             receptionist.setLastName(profileData.getLastName());
         }
-        if (profileData.getPhone() != null) {
+        if (profileData.getPhone() != null && !profileData.getPhone().isBlank()) {
             receptionist.setPhoneNumber(profileData.getPhone());
         }
-        if (profileData.getAddress() != null) {
+        if (profileData.getAddress() != null && !profileData.getAddress().isBlank()) {
             receptionist.setAddress(profileData.getAddress());
         }
-        // Set imagePath if needed
-        if (profileData.getProfileImage() != null) {
-            receptionist.setProfileImage(profileData.getProfileImage());
-        }
+//        if (profileData.getProfileImage() != null) {
+//            receptionist.setProfileImage(profileData.getProfileImage());
+//        }
         return receptionist;
     }
 
     private boolean isValidNurse(String nurseId) {
         Nurse nurse = nurseRepo.findById(nurseId).orElse(null);
-        if(nurse == null) {
-            return false;  // Nurse ID not found
-        }
-        return true;
+        return nurse != null;  // Nurse ID not found
     }
     private boolean isValidDoctor(String doctorId) {
         Doctor doctor = doctorRepo.findById(doctorId).orElse(null);
-        if(doctor == null) {
-            return false;  // Nurse ID not found
-        }
-        return true;
+        return doctor != null;  // Doctor ID not found
     }
     public PatientResponse viewLivePatients(String role, String id, int isOP) {
         PatientResponse response = new PatientResponse();

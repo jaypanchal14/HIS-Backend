@@ -52,8 +52,9 @@ public class FilesStorageService {
                 throw new RuntimeException("Could not read the profile-image!");
             }
         } catch ( IOException e) {
-            throw new RuntimeException("Error: " + e.getMessage());
+            log.error("IOException occurred while loading the image : "+e.getMessage());
         }
+        return null;
     }
 
     public void deleteAll() {

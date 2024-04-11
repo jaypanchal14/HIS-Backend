@@ -67,12 +67,13 @@ public class LoginService {
         }
         resp.setResponse("FAILED");
         resp.setError(msg);
-        log.error("User authenticated failure.");
+        log.error("User authentication failure : "+request);
         return resp;
 
     }
 
     public AuthResponse changePassword(AuthRequest request) {
+        log.info("Request: "+request);
         AuthResponse resp = new AuthResponse();
         String msg = null;
         try {

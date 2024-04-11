@@ -22,6 +22,6 @@ public class UserLoginService implements UserDetailsService {
         Optional<Login> userDetail = loginRepo.findByUserDetail(username);
 
         return userDetail.map(UserLoginDetails::new)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found in the database" + username));
+                .orElseThrow(() -> new UsernameNotFoundException("User not found in the database: " + username));
     }
 }

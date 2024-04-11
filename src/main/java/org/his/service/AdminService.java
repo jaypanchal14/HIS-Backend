@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.file.Path;
+import java.sql.Date;
 import java.time.OffsetDateTime;
 import java.util.*;
 
@@ -384,8 +385,7 @@ public class AdminService {
         p.setFirstName(request.getFirstName());
         p.setLastName(request.getLastName());
         p.setGender(request.getGender());
-        //Need to be added in FIGMA and FrontEnd
-        //n.setBirthDate(Date.valueOf(request.getBirthDate()));
+        p.setBirthDate(Date.valueOf(request.getBirthDate()));
         p.setPhoneNumber(request.getPhone());
         p.setBloodGroup(request.getBlood());
         p.setAddress(request.getAddress());
@@ -400,8 +400,7 @@ public class AdminService {
         r.setFirstName(request.getFirstName());
         r.setLastName(request.getLastName());
         r.setGender(request.getGender());
-        //Need to be added in FIGMA and FrontEnd
-        //n.setBirthDate(Date.valueOf(request.getBirthDate()));
+        r.setBirthDate(Date.valueOf(request.getBirthDate()));
         r.setPhoneNumber(request.getPhone());
         r.setBloodGroup(request.getBlood());
         r.setAddress(request.getAddress());
@@ -415,10 +414,8 @@ public class AdminService {
         n.setId(account.getUserId());
         n.setFirstName(request.getFirstName());
         n.setLastName(request.getLastName());
-        //n.setEmail(request.getEmail());
         n.setGender(request.getGender());
-        //Need to be added in FIGMA and FrontEnd
-        //n.setBirthDate(Date.valueOf(request.getBirthDate()));
+        n.setBirthDate(Date.valueOf(request.getBirthDate()));
         n.setPhoneNumber(request.getPhone());
         n.setBloodGroup(request.getBlood());
         //Need to be added in FIGMA and FrontEnd for doctor and nurse
@@ -427,15 +424,7 @@ public class AdminService {
         n.setAddress(request.getAddress());
         n.setProfileImage(request.getProfileImage());
         n.setUpdatedAt(OffsetDateTime.now());
-        /*
-        n.setMon(shift.getMon());
-        n.setTue(shift.getTue());
-        n.setWed(shift.getWed());
-        n.setThu(shift.getThu());
-        n.setFri(shift.getFri());
-        n.setSat(shift.getSat());
-        n.setSun(shift.getSun());
-        */return n;
+        return n;
     }
 
     private Doctor getNewDoctorFromRequest(Login account, NewUserRequest request) {
@@ -443,10 +432,8 @@ public class AdminService {
         doc.setId(account.getUserId());
         doc.setFirstName(request.getFirstName());
         doc.setLastName(request.getLastName());
-        //doc.setEmail(account.getUsername());
         doc.setGender(request.getGender());
-        //Need to be added in FIGMA and FrontEnd
-        //doc.setBirthDate(Date.valueOf(request.getBirthDate()));
+        doc.setBirthDate(Date.valueOf(request.getBirthDate()));
         doc.setPhoneNumber(request.getPhone());
         doc.setBloodGroup(request.getBlood());
         //Need to be added in FIGMA and FrontEnd for doctor and nurse
@@ -454,14 +441,7 @@ public class AdminService {
         doc.setExperience(request.getExperience());
         doc.setAddress(request.getAddress());
         doc.setProfileImage(request.getProfileImage());
-        doc.setUpdatedAt(OffsetDateTime.now());/*
-        doc.setMon(shift.getMon());
-        doc.setTue(shift.getTue());
-        doc.setWed(shift.getWed());
-        doc.setThu(shift.getThu());
-        doc.setFri(shift.getFri());
-        doc.setSat(shift.getSat());
-        doc.setSun(shift.getSun());*/
+        doc.setUpdatedAt(OffsetDateTime.now());
         return doc;
     }
 

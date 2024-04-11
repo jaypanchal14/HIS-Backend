@@ -3,6 +3,7 @@ package org.his.controller;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.his.bean.*;
+import org.his.exception.NoSuchAccountException;
 import org.his.service.AdminService;
 import org.his.util.Utility;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,36 +27,35 @@ public class AdminController {
 
     @PostMapping("/admin/updateSchedule")
     public ResponseEntity<?> updateSchedule(@RequestBody ScheduleDetail request){
-        log.info("Request received for updating schedule");
+        log.info("updateSchedule | Request received for updating schedule");
         GeneralResp resp = adminService.updateSchedule(request);
         return ResponseEntity.status(HttpStatus.OK).body(resp);
     }
 
     @PostMapping("/admin/checkUser")
     public ResponseEntity<?> checkUser(@RequestBody CheckUserReq request){
-        log.info("Request received to check if user exist or not");
+        log.info("checkUser | Request received to check if user exist or not");
         PersonalDetailResp resp = adminService.checkIfUserExist(request);
         return ResponseEntity.status(HttpStatus.OK).body(resp);
     }
 
     @PostMapping("/admin/updateAccountStatus")
     public ResponseEntity<?> updateAccountStatus(@RequestBody UpdateAccStatusReq request){
-        log.info("Request received to check if user exist or not");
+        log.info("updateAccountStatus | Request received to check if user exist or not");
         GeneralResp resp = adminService.updateAccountStatus(request);
         return ResponseEntity.status(HttpStatus.OK).body(resp);
     }
 
     @GetMapping("/admin/getCount")
     public ResponseEntity<?> countActiveUserByRole(@RequestParam(name="id") String id){
-        log.info("Request received to count active users.");
+        log.info("countActiveUserByRole | Request received to count active users.");
         RoleCountResp resp = adminService.getActiveUserByRole(id);
         return ResponseEntity.status(HttpStatus.OK).body(resp);
     }
 
     @PostMapping(path = "/admin/addUser")
-    public ResponseEntity<?> tryImage(@RequestPart(name = "image")MultipartFile image, @RequestParam(name = "request") String request){
-        log.info("Request received to add new user by admin.");
-        //log.info("Request body : "+request);
+    public ResponseEntity<?> addUser(@RequestPart(name = "image")MultipartFile image, @RequestParam(name = "request") String request){
+        log.info("addUser | Request received to add new user by admin.");
         GeneralResp resp = adminService.addNewUser(request, image);
         if(resp.getError() != null){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(resp);
@@ -65,7 +65,7 @@ public class AdminController {
 
     @GetMapping("/admin/viewUsers")
     public ResponseEntity<?> viewUsers(@RequestParam(required = false) String role){
-        log.info("Request received for viewing the users.");
+        log.info("viewUsers | Request received for viewing the users.");
         ViewUserResponse resp = adminService.getUsers(role);
         if(resp.getError() != null){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(resp);
@@ -80,6 +80,11 @@ public class AdminController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(resp);
         }
         return ResponseEntity.status(HttpStatus.OK).body(resp);
+    }
+
+    @GetMapping("/admin/blah")
+    public ResponseEntity<?> blahBlah() throws NoSuchAccountException {
+        throw new NoSuchAccountException("Le lo bhai test karne");
     }
 
 }

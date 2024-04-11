@@ -1,7 +1,6 @@
 package org.his.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import org.his.bean.GeneralResp;
 import org.his.bean.PharmaHistoryResp;
 import org.his.service.PharmaService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +24,7 @@ public class PharmaController {
             @RequestParam(name = "endDate",   required = false) String endDate
     ){
 
-        log.info("Request received for viewing pharma-history");
+        log.info("getHistory | Request received for viewing pharma-history");
         PharmaHistoryResp resp = pharmaService.getPharmaHistory(pharmaId, startDate, endDate);
         return ResponseEntity.status(HttpStatus.OK).body(resp);
     }
@@ -35,7 +34,7 @@ public class PharmaController {
             @RequestParam(name = "pharmaId")    String pharmaId,
             @RequestParam(name = "diagnosisId") String diagnosisId
     ){
-        log.info("Request received for viewing prescription based on diagnosisId.");
+        log.info("getSpecificDiagnosis | Request received for viewing prescription based on diagnosisId.");
         PharmaHistoryResp resp = pharmaService.getOneFromDiagnosisId(pharmaId, diagnosisId);
         return ResponseEntity.status(HttpStatus.OK).body(resp);
     }

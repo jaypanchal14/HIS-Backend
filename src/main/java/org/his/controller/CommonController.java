@@ -22,7 +22,7 @@ public class CommonController {
 
     @GetMapping("/personalDetails")
     public ResponseEntity<?> getPersonalDetails(@RequestParam(name="id") String id, @RequestParam(name="role") String role){
-        log.info("Request received for getting personal details.");
+        log.info("getPersonalDetails | Request received for getting personal details.");
         PersonalDetailResp resp = service.getPersonalDetail(id, role);
         if (resp.getResponse() != null) {
             return new ResponseEntity<>(resp, HttpStatus.OK);
@@ -33,10 +33,9 @@ public class CommonController {
 
     @PostMapping("/updateProfile")
     public ResponseEntity<PersonalDetailResp> updateProfile(
-            @RequestParam("role") String role,
-            @RequestParam("id") String id,
-            @ModelAttribute PersonalDetail profileData) {
-        PersonalDetailResp response = service.updateProfile(id, role, profileData);
+            @RequestBody PersonalDetail profileData) {
+        log.info("updateProfile | Request received for updating personal details.");
+        PersonalDetailResp response = service.updateProfile(profileData);
         if (response.getResponse() != null) {
             return new ResponseEntity<>(response, HttpStatus.OK);
         } else {
@@ -46,7 +45,7 @@ public class CommonController {
 
     @GetMapping("/scheduleDetails")
     public ResponseEntity<?> getScheduleDetails(@RequestParam(name="email") String email, @RequestParam(name="role") String role){
-        log.info("Request received for getting schedule details.");
+        log.info("getScheduleDetails | Request received for getting schedule details.");
         ScheduleDetailResp resp = service.getScheduleDetail(email, role);
         if (resp.getResponse() != null) {
             return new ResponseEntity<>(resp, HttpStatus.OK);
@@ -61,6 +60,7 @@ public class CommonController {
             @RequestParam(name="isOP") int isOP,
             @RequestParam(name="id") String id
     ){
+        log.info("viewLivePatients | Request received for getting live patients.");
         PatientResponse response = service.viewLivePatients(role, id, isOP);
         if (response.getResponse() != null) {
             return new ResponseEntity<>(response, HttpStatus.OK);
@@ -75,6 +75,8 @@ public class CommonController {
             @RequestParam(name = "id") String id,
             @RequestParam(name = "patientId") String patientId
     ) {
+        log.info("viewOneLivePatient | Request received for getting one live patients.");
+
         PatientResponse response = service.viewOneLivePatient(role, id, patientId);
         if (response.getResponse() != null) {
             return new ResponseEntity<>(response, HttpStatus.OK);

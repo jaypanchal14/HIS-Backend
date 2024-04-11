@@ -1,4 +1,5 @@
 package org.his.controller;
+import lombok.extern.slf4j.Slf4j;
 import org.his.bean.GeneralResp;
 import org.his.bean.PatientDetail;
 import org.his.bean.ReceptionDetailResp;
@@ -10,8 +11,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.io.UnsupportedEncodingException;
 
+@Slf4j
 @RestController
 @RequestMapping("/his")
+@CrossOrigin
 public class NurseController {
 
     private final NurseService nurseService;
@@ -48,10 +51,10 @@ public class NurseController {
     }
 
     @PostMapping("/nurse/updateWard/{nurseId}")
-    public ResponseEntity<GeneralResp> updateWard(
+    public ResponseEntity<GeneralResp> updateWard (
             @PathVariable("nurseId") String nurseId,
             @RequestBody PatientDetail patientDetail
-    ) throws UnsupportedEncodingException {
+    ) {
         GeneralResp response = nurseService.updateWard(patientDetail, nurseId);
         if (response.getResponse() != null) {
             return new ResponseEntity<>(response, HttpStatus.OK);

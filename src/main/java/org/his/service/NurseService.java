@@ -145,7 +145,7 @@ public class NurseService {
 
 
 
-    public GeneralResp updateWard(PatientDetail patientDetail, String nurseId) throws UnsupportedEncodingException {
+    public GeneralResp updateWard(PatientDetail patientDetail, String nurseId) {
         GeneralResp response = new GeneralResp();
 
         Nurse nur=nurseRepo.findById(nurseId).orElse(null);

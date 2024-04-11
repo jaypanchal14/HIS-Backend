@@ -15,7 +15,7 @@ import java.util.Optional;
 public interface LoginRepo extends JpaRepository<Login, String> {
 
 
-    @Query("SELECT l FROM Login l where l.username = ?1")
+    @Query("SELECT l FROM Login l where l.username = ?1 and l.isActive = true")
     public Optional<Login> findByUserDetail(String username);
 
     //Below method is equivalent to findById
