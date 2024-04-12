@@ -23,10 +23,10 @@ public class LoginController {
     public ResponseEntity<AuthResponse> authenticate(@RequestBody AuthRequest request){
         AuthResponse resp;
         resp = loginService.authenticate(request);
-        if(resp.getResponse().equals("SUCCESS")){
+        if(resp.getError() == null){
             return ResponseEntity.status(HttpStatus.OK).body(resp);
         }else{
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(resp);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
         }
     }
 
@@ -34,10 +34,10 @@ public class LoginController {
     public ResponseEntity<AuthResponse> changePassword(@RequestBody AuthRequest request){
         AuthResponse resp;
         resp = loginService.changePassword(request);
-        if(resp.getResponse().equals("SUCCESS")){
+        if(resp.getError() == null){
             return ResponseEntity.status(HttpStatus.OK).body(resp);
         }else{
-            return ResponseEntity.status(HttpStatus.ACCEPTED).body(resp);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
         }
     }
 
@@ -45,10 +45,10 @@ public class LoginController {
     public ResponseEntity<?> forgotPassword(@RequestParam(name="email") String email){
         log.info("Request received for forgot-password");
         GeneralResp resp = loginService.forgotPassword(email);
-        if(resp.getResponse().equals("SUCCESS")){
+        if(resp.getError() == null){
             return ResponseEntity.status(HttpStatus.OK).body(resp);
         }else{
-            return ResponseEntity.status(HttpStatus.ACCEPTED).body(resp);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
         }
     }
 

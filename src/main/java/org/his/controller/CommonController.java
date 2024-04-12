@@ -24,10 +24,10 @@ public class CommonController {
     public ResponseEntity<?> getPersonalDetails(@RequestParam(name="id") String id, @RequestParam(name="role") String role){
         log.info("getPersonalDetails | Request received for getting personal details.");
         PersonalDetailResp resp = service.getPersonalDetail(id, role);
-        if (resp.getResponse() != null) {
-            return new ResponseEntity<>(resp, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
+        if(resp.getError() == null){
+            return ResponseEntity.status(HttpStatus.OK).body(resp);
+        }else{
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
         }
     }
 
@@ -35,11 +35,11 @@ public class CommonController {
     public ResponseEntity<PersonalDetailResp> updateProfile(
             @RequestBody PersonalDetail profileData) {
         log.info("updateProfile | Request received for updating personal details.");
-        PersonalDetailResp response = service.updateProfile(profileData);
-        if (response.getResponse() != null) {
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        PersonalDetailResp resp = service.updateProfile(profileData);
+        if(resp.getError() == null){
+            return ResponseEntity.status(HttpStatus.OK).body(resp);
+        }else{
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
         }
     }
 
@@ -47,10 +47,10 @@ public class CommonController {
     public ResponseEntity<?> getScheduleDetails(@RequestParam(name="email") String email, @RequestParam(name="role") String role){
         log.info("getScheduleDetails | Request received for getting schedule details.");
         ScheduleDetailResp resp = service.getScheduleDetail(email, role);
-        if (resp.getResponse() != null) {
-            return new ResponseEntity<>(resp, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(resp, HttpStatus.BAD_REQUEST);
+        if(resp.getError() == null){
+            return ResponseEntity.status(HttpStatus.OK).body(resp);
+        }else{
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
         }
     }
 
@@ -61,11 +61,11 @@ public class CommonController {
             @RequestParam(name="id") String id
     ){
         log.info("viewLivePatients | Request received for getting live patients.");
-        PatientResponse response = service.viewLivePatients(role, id, isOP);
-        if (response.getResponse() != null) {
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        PatientResponse resp = service.viewLivePatients(role, id, isOP);
+        if(resp.getError() == null){
+            return ResponseEntity.status(HttpStatus.OK).body(resp);
+        }else{
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
         }
     }
 
@@ -77,11 +77,11 @@ public class CommonController {
     ) {
         log.info("viewOneLivePatient | Request received for getting one live patients.");
 
-        PatientResponse response = service.viewOneLivePatient(role, id, patientId);
-        if (response.getResponse() != null) {
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        PatientResponse resp = service.viewOneLivePatient(role, id, patientId);
+        if(resp.getError() == null){
+            return ResponseEntity.status(HttpStatus.OK).body(resp);
+        }else{
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
         }
     }
 

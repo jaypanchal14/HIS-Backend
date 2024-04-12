@@ -9,13 +9,10 @@ import lombok.Data;
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class NewUserRequest extends Shift{
+public class NewUserRequest{
 
-    @NotBlank
     private String firstName;
-    @NotBlank
     private String lastName;
-    @NotBlank
     private String email;
     private String phone;
     private String gender;

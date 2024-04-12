@@ -42,8 +42,8 @@ public class WebSecurityConfig implements WebMvcConfigurer {
                         .requestMatchers("/his/nurse/**").hasAuthority("NURSE")
                         .requestMatchers("/his/pharma/**").hasAuthority("PHARMACIST")
                         .requestMatchers("/his/reception/**").hasAuthority("RECEPTIONIST")
-                        .requestMatchers("/his/patient").hasAnyRole("DOCTOR","NURSE")
-                        .requestMatchers("/his/**").fullyAuthenticated()
+                        .requestMatchers("/his/patient").hasAnyAuthority("DOCTOR","NURSE")
+                        .requestMatchers("/his/**").hasAnyAuthority("DOCTOR","NURSE","ADMIN")
                         //.requestMatchers("/req/**").hasAnyAuthority("ADMIN","NURSE","DOCTOR")
                 );
 //                .httpBasic(basic -> basic.authenticationEntryPoint(authEntryPoint))

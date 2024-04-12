@@ -14,23 +14,19 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin
 public class ReceptionistController {
 
-    private final ReceptionistService receptionistService;
-
     @Autowired
-    public ReceptionistController(ReceptionistService receptionistService) {
-        this.receptionistService = receptionistService;
-    }
+    private ReceptionistService receptionistService;
 
     @GetMapping("/reception/viewSchedule")
     public ResponseEntity<ReceptionDetailResp> viewSchedule(
             @RequestParam("role") String role,
             @RequestParam("id") String id
     ) {
-        ReceptionDetailResp response = receptionistService.viewSchedule(id, role);
-        if (response.getResponse() != null) {
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        ReceptionDetailResp resp = receptionistService.viewSchedule(id, role);
+        if(resp.getError() == null){
+            return ResponseEntity.status(HttpStatus.OK).body(resp);
+        }else{
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
         }
     }
 
@@ -39,21 +35,21 @@ public class ReceptionistController {
             @PathVariable String receptionistId,
             @ModelAttribute PatientDetail patientDetail
     ) {
-        GeneralResp response = receptionistService.registerPatient(receptionistId, patientDetail);
-        if (response.getResponse().equals("SUCCESS")) {
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        GeneralResp resp = receptionistService.registerPatient(receptionistId, patientDetail);
+        if(resp.getError() == null){
+            return ResponseEntity.status(HttpStatus.OK).body(resp);
+        }else{
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
         }
     }
 
     @PostMapping("/reception/isPatientPresent")
     public ResponseEntity<PatientResponse> isPatientPresent(@RequestBody PatientDetail patientDetail) {
-        PatientResponse response = receptionistService.isPatientPresent(patientDetail);
-        if (response.getResponse() != null) {
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        PatientResponse resp = receptionistService.isPatientPresent(patientDetail);
+        if(resp.getError() == null){
+            return ResponseEntity.status(HttpStatus.OK).body(resp);
+        }else{
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
         }
     }
 }

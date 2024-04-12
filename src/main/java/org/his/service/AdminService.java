@@ -459,11 +459,25 @@ public class AdminService {
         return l;
     }
 
-    private void validateNewUserRequest(NewUserRequest request) {
-        //Checked by @Valid
+    private void validateNewUserRequest(NewUserRequest request) throws Exception {
 
-        //In case they sent it in lower
         request.setRole(request.getRole().toUpperCase());
+
+        if(request.getFirstName() == null || request.getFirstName().isBlank()){
+            throw new Exception("Empty first-name passed");
+        }
+        if(request.getLastName() == null || request.getLastName().isBlank()){
+            throw new Exception("Empty last-name passed");
+        }
+        if(request.getEmail() == null || request.getEmail().isBlank()){
+            throw new Exception("Empty email passed");
+        }
+        if(request.getBirthDate() == null || request.getBirthDate().isBlank()){
+            throw new Exception("Empty birthDate passed");
+        }
+        //Just to check if the date is in correct format
+        Date.valueOf(request.getBirthDate());
+
     }
 
     public ViewUserResponse getUsers(String role) {

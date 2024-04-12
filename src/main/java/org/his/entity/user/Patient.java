@@ -14,7 +14,7 @@ import java.time.OffsetDateTime;
 @Table(name = "Patient")
 public class Patient {
 
-    //Patient-id would be his/her aadhar card
+    //Patient-id would be his/her AADHAAR card
     @Id
     private String id;
     private String firstName;

@@ -17,23 +17,19 @@ import java.io.UnsupportedEncodingException;
 @CrossOrigin
 public class NurseController {
 
-    private final NurseService nurseService;
-
     @Autowired
-    public NurseController(NurseService nurseService) {
-        this.nurseService = nurseService;
-    }
+    private NurseService nurseService;
 
     @GetMapping("/nurse/onShiftNurse")
     public ResponseEntity<ReceptionDetailResp> onShiftNurse(
             @RequestParam("role") String role,
             @RequestParam("id") String id
     ) {
-        ReceptionDetailResp response = nurseService.getOnShiftNurses(id, role);
-        if (response.getResponse() != null) {
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        ReceptionDetailResp resp = nurseService.getOnShiftNurses(id, role);
+        if(resp.getError() == null){
+            return ResponseEntity.status(HttpStatus.OK).body(resp);
+        }else{
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
         }
     }
 
@@ -42,11 +38,11 @@ public class NurseController {
             @RequestParam("role") String role,
             @RequestParam("id") String id
     ) {
-        WardResponse response = nurseService.getWardDetails(id, role);
-        if (response.getResponse() != null) {
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        WardResponse resp = nurseService.getWardDetails(id, role);
+        if(resp.getError() == null){
+            return ResponseEntity.status(HttpStatus.OK).body(resp);
+        }else{
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
         }
     }
 
@@ -55,11 +51,11 @@ public class NurseController {
             @PathVariable("nurseId") String nurseId,
             @RequestBody PatientDetail patientDetail
     ) {
-        GeneralResp response = nurseService.updateWard(patientDetail, nurseId);
-        if (response.getResponse() != null) {
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        GeneralResp resp = nurseService.updateWard(patientDetail, nurseId);
+        if(resp.getError() == null){
+            return ResponseEntity.status(HttpStatus.OK).body(resp);
+        }else{
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
         }
     }
 }

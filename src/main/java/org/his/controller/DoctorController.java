@@ -15,24 +15,17 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin
 public class DoctorController {
 
-    private final DoctorService doctorService;
-
     @Autowired
-    public DoctorController(DoctorService doctorService) {
-        this.doctorService = doctorService;
-    }
+    private DoctorService doctorService;
 
     @GetMapping("/doc/viewPastPatients")
-    public ResponseEntity<PatientResponse> viewLivePatients(
-//            @RequestParam(name="role") String role,
-//            @RequestParam(name="id") String id
-    ){
-        PatientResponse response = doctorService.viewPastPatients();
-        log.info(response.toString());
-        if (response.getResponse() != null) {
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    public ResponseEntity<PatientResponse> viewLivePatients(){
+        PatientResponse resp = doctorService.viewPastPatients();
+//        log.info(response.toString());
+        if(resp.getError() == null){
+            return ResponseEntity.status(HttpStatus.OK).body(resp);
+        }else{
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
         }
     }
 }

@@ -1,5 +1,6 @@
 package org.his.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.his.bean.*;
 import org.his.entity.user.Doctor;
 import org.his.entity.user.Patient;
@@ -14,17 +15,18 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 public class ReceptionistService {
 
-    private final DoctorRepo doctorRepo;
+    @Autowired
+    private DoctorRepo doctorRepo;
 
     @Autowired
-    public ReceptionistService(DoctorRepo doctorRepo,PatientRepo patientRepo) {
-        this.doctorRepo = doctorRepo;
-        this.patientRepo= patientRepo;
-    }
+    private PatientRepo patientRepo;
+
     DateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
+
     public ReceptionDetailResp viewSchedule(String id, String role) {
         ReceptionDetailResp response = new ReceptionDetailResp();
         if (!role.equals("RECEPTIONIST")) {
@@ -92,9 +94,6 @@ public class ReceptionistService {
         return response;
     }
 
-    @Autowired
-    private PatientRepo patientRepo;
-
     public void savePatient(Patient patient) {
         patientRepo.save(patient);
     }
@@ -118,7 +117,7 @@ public class ReceptionistService {
         patient.setLastName(patientDetail.getLastName());
         patient.setEmail(patientDetail.getEmail());
         patient.setGender(patientDetail.getGender());
-        patient.setBirthDate(Date.valueOf(dateFormat.format(patientDetail.getBirthDate())));
+        patient.setBirthDate(Date.valueOf(patientDetail.getBirthDate()));
         patient.setPhoneNumber(patientDetail.getPhone());
         patient.setBloodGroup(patientDetail.getBlood());
         patient.setAddress(patientDetail.getAddress());

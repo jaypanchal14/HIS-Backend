@@ -26,7 +26,11 @@ public class PharmaController {
 
         log.info("getHistory | Request received for viewing pharma-history");
         PharmaHistoryResp resp = pharmaService.getPharmaHistory(pharmaId, startDate, endDate);
-        return ResponseEntity.status(HttpStatus.OK).body(resp);
+        if (resp.getError() != null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
+        } else {
+            return ResponseEntity.status(HttpStatus.OK).body(resp);
+        }
     }
 
     @GetMapping("/pharma/viewByDiagnosis")
@@ -36,7 +40,11 @@ public class PharmaController {
     ){
         log.info("getSpecificDiagnosis | Request received for viewing prescription based on diagnosisId.");
         PharmaHistoryResp resp = pharmaService.getOneFromDiagnosisId(pharmaId, diagnosisId);
-        return ResponseEntity.status(HttpStatus.OK).body(resp);
+        if (resp.getError() != null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
+        } else {
+            return ResponseEntity.status(HttpStatus.OK).body(resp);
+        }
     }
 
 }
