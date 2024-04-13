@@ -10,9 +10,6 @@ import org.his.util.Utility;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -155,7 +152,7 @@ public class NurseService {
                return response;
            }
         // Check if patientId, wardNo, type, and action are present
-        if (patientDetail == null || patientDetail.getId() == null ||
+        if (patientDetail == null || patientDetail.getAadhaar() == null ||
                 patientDetail.getWardNo() == null ||
                 patientDetail.getAction() == null) {
             response.setError("All required fields must be provided.");
@@ -175,7 +172,7 @@ public class NurseService {
         }
         Ward ward = wardOptional.get();
 
-        Optional<Patient> optP = patientRepo.findById(patientDetail.getId());
+        Optional<Patient> optP = patientRepo.findById(patientDetail.getAadhaar());
         if(optP.isEmpty()){
             response.setError("No such patient found.");
             return response;
@@ -183,12 +180,12 @@ public class NurseService {
         Patient p = optP.get();
 
         if (patientDetail.getAction().equalsIgnoreCase("A")) {
-            ward.setPatientId(patientDetail.getId());
+            ward.setPatientId(patientDetail.getAadhaar());
             ward.setFirstName(p.getFirstName());
             ward.setLastName(p.getLastName());
             ward.setEmpty(false);
         } else {
-            if (ward.getPatientId() == null || !ward.getPatientId().equals(patientDetail.getId())) {
+            if (ward.getPatientId() == null || !ward.getPatientId().equals(patientDetail.getAadhaar())) {
                 response.setError("Patient is not allocated to this ward.");
                 return response;
             }

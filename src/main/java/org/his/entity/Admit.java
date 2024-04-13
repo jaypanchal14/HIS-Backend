@@ -19,6 +19,7 @@ public class Admit {
     private boolean isActive;
     private boolean isEmergency;
     private String patientId;
+    private String remark;
     private OffsetDateTime date;
 
 }

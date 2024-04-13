@@ -150,8 +150,8 @@ public class AdminService {
         String msg = null;
         try{
             //Check if admin is present
-
-            //Retrieve details based on email-id and role
+            log.info("Request: "+request);
+            //Retrieve details based on email-id
             Optional<Login> optAccount = loginRepo.findById(request.getEmail());
             if (optAccount.isEmpty()) {
                 msg = "Username not found in the database.";
@@ -163,7 +163,7 @@ public class AdminService {
                 case "NURSE":
                     Optional<Nurse> optNurse = nurseRepo.findById(account.getUserId());
                     if (optNurse.isEmpty()) {
-                        resp.setError("Nurse not found in database");
+                        resp.setError("Nurse not found in table");
                     }else{
                         Nurse n = optNurse.get();
                         PersonalDetail detail = new PersonalDetail();
@@ -179,7 +179,7 @@ public class AdminService {
                 case "DOCTOR":
                     Optional<Doctor> optDoc = doctorRepo.findById(account.getUserId());
                     if (optDoc.isEmpty()) {
-                        resp.setError("Doctor not found in database");
+                        resp.setError("Doctor not found in table");
                     }else{
                         Doctor d = optDoc.get();
                         PersonalDetail detail = new PersonalDetail();
@@ -195,7 +195,7 @@ public class AdminService {
                 case "PHARMACIST":
                     Optional<Pharma> optPharma = pharmaRepo.findById(account.getUserId());
                     if (optPharma.isEmpty()) {
-                        resp.setError("Username not found");
+                        resp.setError("Pharmacist not found in table");
                     }else{
                         Pharma p = optPharma.get();
                         PersonalDetail detail = new PersonalDetail();
@@ -211,7 +211,7 @@ public class AdminService {
                 case "RECEPTIONIST":
                     Optional<Receptionist> optReception = receptionRepo.findById(account.getUserId());
                     if (optReception.isEmpty()) {
-                        resp.setError("Username not found");
+                        resp.setError("Receptionist not found in table");
                     }else{
                         Receptionist r = optReception.get();
                         PersonalDetail detail = new PersonalDetail();
@@ -225,7 +225,7 @@ public class AdminService {
                     break;
 
                 default:
-                    msg = "Undefined role passed in the request.";
+                    msg = "Undefined ROLE passed in the request.";
                     log.error(msg);
                     resp.setError(msg);
             }
@@ -367,7 +367,7 @@ public class AdminService {
                     throw new Exception("Undefined role passed in the request.");
             }
 
-            fileService.saveImage(file, profileImage);
+            fileService.saveUserImage(file, profileImage);
             //Send an email having their respective profile password
             emailService.sendEmailWithPassword(account.getUsername(), account.getPassword());
 
@@ -627,6 +627,6 @@ public class AdminService {
     }
 
     public String tryImage() {
-        return fileService.loadImage("ff237a5b4fd14871712229626350.png");
+        return fileService.loadUserImage("ff237a5b4fd14871712229626350.png");
     }
 }

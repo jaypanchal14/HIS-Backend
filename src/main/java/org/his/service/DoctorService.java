@@ -47,7 +47,7 @@ public class DoctorService {
         for (Patient patient : patients) {
 
                 PatientDetail detail = new PatientDetail();
-                detail.setId(patient.getId());
+                detail.setAadhaar(patient.getAadhar());
                 detail.setFirstName(patient.getFirstName());
                 detail.setLastName(patient.getLastName());
 //                detail.setEmail(patient.getEmail());

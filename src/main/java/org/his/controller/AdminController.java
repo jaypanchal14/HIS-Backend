@@ -49,7 +49,7 @@ public class AdminController {
 
     @PostMapping("/admin/updateAccountStatus")
     public ResponseEntity<?> updateAccountStatus(@RequestBody UpdateAccStatusReq request){
-        log.info("updateAccountStatus | Request received to check if user exist or not");
+        log.info("updateAccountStatus | Request received to update user-account status");
         GeneralResp resp = adminService.updateAccountStatus(request);
         if(resp.getError() == null){
             return ResponseEntity.status(HttpStatus.OK).body(resp);

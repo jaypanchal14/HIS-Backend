@@ -1,5 +1,6 @@
 package org.his.controller;
 
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.his.bean.*;
 import org.his.service.ReceptionistService;
@@ -17,12 +18,21 @@ public class ReceptionistController {
     @Autowired
     private ReceptionistService receptionistService;
 
-    @GetMapping("/reception/viewSchedule")
-    public ResponseEntity<ReceptionDetailResp> viewSchedule(
+
+    /*
+    @GetMapping("/reception/home")
+    public ResponseEntity<?> getHome(){
+        //As we are passing personalDetails with commonController endpoint, we are not going to implement this.
+        // On the home screen of the receptionist, no other details is required
+        return null;
+    }*/
+
+    @GetMapping("/reception/getAvailableDoctor")
+    public ResponseEntity<ReceptionDetailResp> getAvailableDoctor(
             @RequestParam("role") String role,
             @RequestParam("id") String id
     ) {
-        ReceptionDetailResp resp = receptionistService.viewSchedule(id, role);
+        ReceptionDetailResp resp = receptionistService.getAvailableDoctor(id, role);
         if(resp.getError() == null){
             return ResponseEntity.status(HttpStatus.OK).body(resp);
         }else{
@@ -30,12 +40,11 @@ public class ReceptionistController {
         }
     }
 
-    @PostMapping("/reception/registerPatient/{receptionistId}")
-    public ResponseEntity<GeneralResp> registerPatient(
-            @PathVariable String receptionistId,
-            @ModelAttribute PatientDetail patientDetail
-    ) {
-        GeneralResp resp = receptionistService.registerPatient(receptionistId, patientDetail);
+    @PostMapping("/reception/registerPatient")
+    public ResponseEntity<?> registerPatient(@ModelAttribute PatientDetail request) {
+        log.info("registerPatient | request received to register new patient");
+//        return ResponseEntity.status(HttpStatus.OK).body("OK");
+        GeneralResp resp = receptionistService.registerPatient(request);
         if(resp.getError() == null){
             return ResponseEntity.status(HttpStatus.OK).body(resp);
         }else{
@@ -45,6 +54,7 @@ public class ReceptionistController {
 
     @PostMapping("/reception/isPatientPresent")
     public ResponseEntity<PatientResponse> isPatientPresent(@RequestBody PatientDetail patientDetail) {
+        log.info("isPatientPresent | request received for checking patient");
         PatientResponse resp = receptionistService.isPatientPresent(patientDetail);
         if(resp.getError() == null){
             return ResponseEntity.status(HttpStatus.OK).body(resp);

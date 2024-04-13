@@ -16,7 +16,7 @@ public class Patient {
 
     //Patient-id would be his/her AADHAAR card
     @Id
-    private String id;
+    private String aadhar;
     private String firstName;
     private String lastName;
     private String email;
