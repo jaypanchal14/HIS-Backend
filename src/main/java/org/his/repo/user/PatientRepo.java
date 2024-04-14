@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 
 @Repository
 public interface PatientRepo extends JpaRepository<Patient, String> {
@@ -18,5 +19,7 @@ public interface PatientRepo extends JpaRepository<Patient, String> {
     @Modifying
     @Query("UPDATE Patient p set p.patientType = ?2,p.wardNo = ?3  where p.aadhar = ?1")
     Integer updatePatientRegistration(String aadhar, String type, String ward);
+
+    List<Patient> findAllByAadharIn(Set<String> aadhar);
 
 }

@@ -1,15 +1,12 @@
 package org.his.controller;
+
 import lombok.extern.slf4j.Slf4j;
-import org.his.bean.GeneralResp;
-import org.his.bean.PatientDetail;
-import org.his.bean.ReceptionDetailResp;
-import org.his.bean.WardResponse;
+import org.his.bean.*;
 import org.his.service.NurseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.io.UnsupportedEncodingException;
 
 @Slf4j
 @RestController
@@ -19,6 +16,17 @@ public class NurseController {
 
     @Autowired
     private NurseService nurseService;
+
+    @GetMapping("/nurse/home")
+    public ResponseEntity<?> dashboard(@RequestParam(name = "userId") String userId){
+        log.info("dashboard | request received to get dashboard-data");
+        DashboardResponse resp = nurseService.getDashBoard(userId);
+        if(resp.getError() == null){
+            return ResponseEntity.status(HttpStatus.OK).body(resp);
+        }else{
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
+        }
+    }
 
     @GetMapping("/nurse/onShiftNurse")
     public ResponseEntity<ReceptionDetailResp> onShiftNurse(

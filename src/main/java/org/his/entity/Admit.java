@@ -16,8 +16,8 @@ public class Admit {
     private String admitId;
     //To check is OP or IP
     private String patientType;
-    private boolean isActive;
-    private boolean isEmergency;
+    private boolean active;
+    private boolean emergency;
     private String patientId;
     private String remark;
     private OffsetDateTime date;

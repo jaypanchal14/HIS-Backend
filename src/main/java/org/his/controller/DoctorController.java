@@ -1,9 +1,9 @@
 package org.his.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.his.bean.DashboardResponse;
 import org.his.bean.PatientResponse;
 import org.his.service.DoctorService;
-import org.his.service.NurseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,9 +19,20 @@ public class DoctorController {
     private DoctorService doctorService;
 
     @GetMapping("/doc/viewPastPatients")
-    public ResponseEntity<PatientResponse> viewLivePatients(){
-        PatientResponse resp = doctorService.viewPastPatients();
-//        log.info(response.toString());
+    public ResponseEntity<PatientResponse> viewPastPatients(@RequestParam(name = "userId") String userId){
+        log.info("viewPastPatients | request received to view past-patients");
+        PatientResponse resp = doctorService.viewPastPatients(userId);
+        if(resp.getError() == null){
+            return ResponseEntity.status(HttpStatus.OK).body(resp);
+        }else{
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
+        }
+    }
+
+    @GetMapping("/doc/home")
+    public ResponseEntity<?> dashboard(@RequestParam(name = "userId") String userId){
+        log.info("dashboard | request received to get dashboard-data");
+        DashboardResponse resp = doctorService.getDashBoard(userId);
         if(resp.getError() == null){
             return ResponseEntity.status(HttpStatus.OK).body(resp);
         }else{

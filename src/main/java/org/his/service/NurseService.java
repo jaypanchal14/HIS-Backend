@@ -1,39 +1,47 @@
 package org.his.service;
+import lombok.extern.slf4j.Slf4j;
 import org.his.bean.*;
 import org.his.entity.Ward;
+import org.his.entity.user.Doctor;
 import org.his.entity.user.Nurse;
 import org.his.entity.user.Patient;
+import org.his.exception.NoSuchAccountException;
+import org.his.exception.RequestValidationException;
+import org.his.repo.AdmitRepo;
 import org.his.repo.WardRepo;
 import org.his.repo.user.NurseRepo;
 import org.his.repo.user.PatientRepo;
+import org.his.util.ShiftUtility;
 import org.his.util.Utility;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Service
 public class NurseService {
 
-    private final NurseRepo nurseRepo;
-    private final WardRepo wardRepo;
+    @Autowired
+    private NurseRepo nurseRepo;
 
-    //@Autowired
+    @Autowired
+    private WardRepo wardRepo;
+
+    @Autowired
     private PatientRepo patientRepo;
 
     @Autowired
-    public NurseService(NurseRepo nurseRepo, WardRepo wardRepo, PatientRepo patientRepo) {
+    private FilesStorageService fileService;
 
-        this.nurseRepo = nurseRepo;
-        this.wardRepo = wardRepo;
-        this.patientRepo = patientRepo;
-    }
-
-    DateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
+    @Autowired
+    private AdmitRepo admitRepo;
 
     public ReceptionDetailResp getOnShiftNurses(String id, String role) {
         ReceptionDetailResp response = new ReceptionDetailResp();
@@ -201,5 +209,83 @@ public class NurseService {
     }
 
 
-}
+    public DashboardResponse getDashBoard(String userId) {
+        DashboardResponse response = new DashboardResponse();
+//        PersonalDetail detail;
+        try{
+            if(userId == null || userId.isBlank()){
+                throw new RequestValidationException("Empty nurseId passed in the request");
+            }
 
+            Optional<Nurse> optNurse = nurseRepo.findById(userId);
+            if (optNurse.isEmpty()) {
+                throw new NoSuchAccountException("No such nurse found in the table");
+            }else{
+                PersonalDetail detail = getDetailForNurse(optNurse.get());
+                response.setDetail(detail);
+
+                Shift shift = getShiftForNurse(optNurse.get());
+                response.setShift(shift);
+            }
+
+            LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
+            int hour = now.getHour();
+            int currentDayOfWeek = now.getDayOfWeek().getValue();
+            if(ShiftUtility.isNurseOnShift(optNurse.get(), hour, currentDayOfWeek)){
+                response.setOnDuty(1);
+            }
+
+            if(optNurse.get().isHead() && response.getOnDuty()==1){
+                //If head-nurse is on duty, display IP/OP patient count
+                int ipPatientCount = admitRepo.countAdmitByActiveIsTrueAndPatientType("IP");
+                int opPatientCount = admitRepo.countAdmitByActiveIsTrueAndPatientType("OP");
+                response.setIpPatient(ipPatientCount);
+                response.setOpPatient(opPatientCount);
+            }
+
+            log.info("getDashBoard | request processed successfully.");
+        } catch (NoSuchAccountException e){
+            log.error("NoSuchAccountException | Exception occurred: "+e.getMessage());
+            response.setError(e.getMessage());
+        } catch (RequestValidationException e){
+            log.error("RequestValidationException | Exception occurred: "+e.getMessage());
+            response.setError(e.getMessage());
+        } catch (Exception e){
+            log.error("getDashBoard | Exception occurred: "+e.getMessage());
+            response.setError(e.getMessage());
+        }
+        return response;
+    }
+
+    private Shift getShiftForNurse(Nurse nurse) {
+        Shift obj = new Shift();
+        obj.setMon(nurse.getMon());
+        obj.setTue(nurse.getTue());
+        obj.setWed(nurse.getWed());
+        obj.setThu(nurse.getThu());
+        obj.setFri(nurse.getFri());
+        obj.setSat(nurse.getSat());
+        obj.setSun(nurse.getSun());
+        return obj;
+    }
+
+    private PersonalDetail getDetailForNurse(Nurse nurse) {
+        PersonalDetail obj = new PersonalDetail();
+        obj.setRole("NURSE");
+        obj.setFirstName(nurse.getFirstName());
+        obj.setLastName(nurse.getLastName());
+        obj.setAddress(nurse.getAddress());
+        obj.setBirthDate(nurse.getBirthDate().toString());
+        obj.setBlood(nurse.getBloodGroup());
+        obj.setGender(nurse.getGender());
+        obj.setHead(nurse.isHead());
+        obj.setSpecialization(nurse.getSpecialization());
+        obj.setPhone(nurse.getPhoneNumber());
+
+        obj.setActive(true);
+
+        //obj.setProfileImage(fileService.loadUserImage(nurse.getProfileImage()));
+        return obj;
+    }
+
+}

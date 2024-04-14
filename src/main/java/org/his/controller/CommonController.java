@@ -1,7 +1,6 @@
 package org.his.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import org.his.bean.PatientResponse;
 import org.his.bean.PersonalDetail;
 import org.his.bean.PersonalDetailResp;
 import org.his.bean.ScheduleDetailResp;
@@ -47,37 +46,6 @@ public class CommonController {
     public ResponseEntity<?> getScheduleDetails(@RequestParam(name="email") String email, @RequestParam(name="role") String role){
         log.info("getScheduleDetails | Request received for getting schedule details.");
         ScheduleDetailResp resp = service.getScheduleDetail(email, role);
-        if(resp.getError() == null){
-            return ResponseEntity.status(HttpStatus.OK).body(resp);
-        }else{
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
-        }
-    }
-
-    @GetMapping("/viewLivePatients")
-    public ResponseEntity<PatientResponse> viewLivePatients(
-            @RequestParam(name="role") String role,
-            @RequestParam(name="isOP") int isOP,
-            @RequestParam(name="id") String id
-    ){
-        log.info("viewLivePatients | Request received for getting live patients.");
-        PatientResponse resp = service.viewLivePatients(role, id, isOP);
-        if(resp.getError() == null){
-            return ResponseEntity.status(HttpStatus.OK).body(resp);
-        }else{
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
-        }
-    }
-
-    @GetMapping("/viewOneLivePatient")
-    public ResponseEntity<PatientResponse> viewOneLivePatient(
-            @RequestParam(name = "role") String role,
-            @RequestParam(name = "id") String id,
-            @RequestParam(name = "patientId") String patientId
-    ) {
-        log.info("viewOneLivePatient | Request received for getting one live patients.");
-
-        PatientResponse resp = service.viewOneLivePatient(role, id, patientId);
         if(resp.getError() == null){
             return ResponseEntity.status(HttpStatus.OK).body(resp);
         }else{

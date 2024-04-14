@@ -34,6 +34,7 @@ public class WebSecurityConfig implements WebMvcConfigurer {
                 //.cors(AbstractHttpConfigurer::disable)
                 .sessionManagement(management -> management.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(Authorize -> Authorize
+                        .requestMatchers("/his/health").permitAll()
                         .requestMatchers("/his/authenticate").permitAll()
                         .requestMatchers("/his/forgotPassword").permitAll()
                         .requestMatchers("/his/changePassword").fullyAuthenticated()

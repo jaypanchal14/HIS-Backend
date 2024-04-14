@@ -2,19 +2,13 @@ package org.his.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.his.bean.*;
-import org.his.entity.Admit;
 import org.his.entity.user.*;
 import org.his.exception.AuthenticationException;
-import org.his.repo.AdmitRepo;
 import org.his.repo.LoginRepo;
 import org.his.repo.user.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -38,12 +32,6 @@ public class CommonService {
 
     @Autowired
     private LoginRepo loginRepo;
-
-    @Autowired
-    private PatientRepo patientRepo;
-
-    @Autowired
-    private AdmitRepo admitRepo;
 
     @Autowired
     private FilesStorageService fileService;
@@ -101,9 +89,9 @@ public class CommonService {
                     resp.setResponse(detail);
                 }
                 break;
-
             default:
                 log.error("Undefined role passed in the request.");
+                resp.setError("Undefined role passed in the request");
         }
 
         return resp;
@@ -208,9 +196,17 @@ public class CommonService {
             ScheduleDetail detail = null;
             if("DOCTOR".equals(role)){
                 Optional<Doctor> doc = doctorRepo.findById(userId);
+                if(doc.isEmpty()){
+                    msg = "Doctor not found in the doctor table";
+                    throw new Exception(msg);
+                }
                 detail = getScheduleDetailForDoc(doc.get(), email);
             } else {
                 Optional<Nurse> nurse = nurseRepo.findById(userId);
+                if(nurse.isEmpty()){
+                    msg = "Nurse not found in the nurse table";
+                    throw new Exception(msg);
+                }
                 detail = getScheduleDetailForNurse(nurse.get(), email);
             }
             resp.setResponse(detail);
@@ -321,13 +317,11 @@ public class CommonService {
                 default:
                     response.setError("Role not supported.");
                     throw new RuntimeException("Invalid role passed in the request");
-
             }
         }catch (Exception e){
             log.error("updateProfile : Exception occurred while updating: "+e.getMessage());
             response.setError(e.getMessage());
         }
-
         return response;
     }
 
@@ -350,10 +344,6 @@ public class CommonService {
         if (profileData.getAddress() != null && !profileData.getAddress().isBlank()) {
             doctor.setAddress(profileData.getAddress());
         }
-        // Set imagePath if needed
-//        if (profileData.getProfileImage() != null) {
-//            doctor.setProfileImage(profileData.getProfileImage());
-//        }
         return doctor;
     }
 
@@ -370,10 +360,6 @@ public class CommonService {
         if (profileData.getAddress() != null && !profileData.getAddress().isBlank()) {
             admin.setAddress(profileData.getAddress());
         }
-        // Set imagePath if needed
-//        if (profileData.getProfileImage() != null) {
-//            admin.setProfileImage(profileData.getProfileImage());
-//        }
         return admin;
     }
 
@@ -390,9 +376,6 @@ public class CommonService {
         if (profileData.getAddress() != null && !profileData.getAddress().isBlank()) {
             nurse.setAddress(profileData.getAddress());
         }
-//        if (profileData.getProfileImage() != null) {
-//            nurse.setProfileImage(profileData.getProfileImage());
-//        }
         return nurse;
     }
 
@@ -409,10 +392,6 @@ public class CommonService {
         if (profileData.getAddress() != null && !profileData.getAddress().isBlank()) {
             pharma.setAddress(profileData.getAddress());
         }
-        // Set imagePath if needed
-//        if (profileData.getProfileImage() != null) {
-//            pharma.setProfileImage(profileData.getProfileImage());
-//        }
         return pharma;
     }
 
@@ -429,154 +408,7 @@ public class CommonService {
         if (profileData.getAddress() != null && !profileData.getAddress().isBlank()) {
             receptionist.setAddress(profileData.getAddress());
         }
-//        if (profileData.getProfileImage() != null) {
-//            receptionist.setProfileImage(profileData.getProfileImage());
-//        }
         return receptionist;
-    }
-
-    private boolean isValidNurse(String nurseId) {
-        Nurse nurse = nurseRepo.findById(nurseId).orElse(null);
-        return nurse != null;  // Nurse ID not found
-    }
-    private boolean isValidDoctor(String doctorId) {
-        Doctor doctor = doctorRepo.findById(doctorId).orElse(null);
-        return doctor != null;  // Doctor ID not found
-    }
-    public PatientResponse viewLivePatients(String role, String id, int isOP) {
-        PatientResponse response = new PatientResponse();
-
-        // Check if the role is supported
-        if (!role.equalsIgnoreCase("DOCTOR") && !role.equalsIgnoreCase("NURSE")) {
-            response.setError("Role not supported.");
-            return response;
-        }
-
-        if(role.equalsIgnoreCase("NURSE"))
-        {
-            if (!isValidNurse(id)) {
-                response.setError("Invalid nurse credentials or unauthorized access.");
-                return response;
-            }
-        }
-        else {
-            if (!isValidDoctor(id)) {
-                response.setError("Invalid Doctor credentials or unauthorized access.");
-                return response;
-            }
-        }
-        List<PatientDetail> livePatients = new ArrayList<>();
-
-        // Fetch all admits from the database
-        List<Admit> admits = admitRepo.findAll();
-
-        // Iterate through admits and filter live patients based on role and isOP flag
-        for (Admit admit : admits) {
-            // Check if the patient is live (isActive) and matches the isOP flag
-            if (admit.isActive() && (isOP == 1 && "OP".equalsIgnoreCase(admit.getPatientType()) || isOP == 0 && "IP".equalsIgnoreCase(admit.getPatientType()))) {
-                PatientDetail patientDetail = getPatientDetailById(admit);
-                if (patientDetail != null) {
-                    // Add patient details to the list of live patients
-                    livePatients.add(patientDetail);
-                }
-            }
-        }
-
-        // Set the response
-        response.setResponse(livePatients);
-        return response;
-    }
-
-    DateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
-    // Fetches patient details from Admit and Patient entities and constructs a PatientDetail object
-    private PatientDetail getPatientDetailById(Admit admit) {
-        Optional<Patient> patientOptional = patientRepo.findById(admit.getPatientId());
-        if (patientOptional.isPresent()) {
-            Patient patient = patientOptional.get();
-            PatientDetail patientDetail = new PatientDetail();
-            patientDetail.setAadhaar(patient.getAadhar());
-            patientDetail.setAdmitId(admit.getAdmitId());
-            patientDetail.setFirstName(patient.getFirstName());
-            patientDetail.setLastName(patient.getLastName());
-            patientDetail.setPhone(patient.getPhoneNumber());
-            patientDetail.setGender(patient.getGender());
-            patientDetail.setBlood(patient.getBloodGroup());
-            patientDetail.setWardNo(patient.getWardNo());
-            patientDetail.setAddress(patient.getAddress());
-            patientDetail.setBirthDate(dateFormat.format(patient.getBirthDate()));
-//            patientDetail.set(admit.getDate().format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss.SSSSSS")));
-            return patientDetail;
-        }
-        return null;
-    }
-
-
-    public PatientResponse viewOneLivePatient(String role, String id, String patientId) {
-        PatientResponse response = new PatientResponse();
-
-        if(role.equalsIgnoreCase("NURSE"))
-        {
-            if (!isValidNurse(id)) {
-                response.setError("Invalid nurse credentials or unauthorized access.");
-                return response;
-            }
-        }
-        else {
-            if (!isValidDoctor(id)) {
-                response.setError("Invalid Doctor credentials or unauthorized access.");
-                return response;
-            }
-        }
-
-        if (!role.equalsIgnoreCase("DOCTOR") && !role.equalsIgnoreCase("NURSE")) {
-            response.setError("Role not supported.");
-            return response;
-        }
-
-        List<PatientDetail> livePatients = new ArrayList<>();
-
-        Optional<Admit> admitOptional = admitRepo.findByPatientId(patientId);
-        if (admitOptional.isPresent()) {
-            Admit admit = admitOptional.get();
-            // Check if the patient is live (isActive)
-            if (admit.isActive()) {
-                // Fetch patient details based on admit's patientId
-                PatientDetail patientDetail = getPatientDetailsById(admit);
-                if (patientDetail != null) {
-                    // Set the response
-                    livePatients.add(patientDetail);
-                    response.setResponse(livePatients);
-                    return response;
-                }
-            } else {
-                response.setError("Patient is not live.");
-                return response;
-            }
-        }
-
-        response.setError("Patient not found or not live.");
-        return response;
-    }
-
-    // Fetches patient details from Admit and Patient entities and constructs a PatientDetail object
-    private PatientDetail getPatientDetailsById(Admit admit) {
-        Optional<Patient> patientOptional = patientRepo.findById(admit.getPatientId());
-        if (patientOptional.isPresent()) {
-            Patient patient = patientOptional.get();
-            PatientDetail patientDetail = new PatientDetail();
-            patientDetail.setAadhaar(patient.getAadhar());
-            patientDetail.setAdmitId(admit.getAdmitId());
-            patientDetail.setFirstName(patient.getFirstName());
-            patientDetail.setLastName(patient.getLastName());
-            patientDetail.setPhone(patient.getPhoneNumber());
-            patientDetail.setGender(patient.getGender());
-            patientDetail.setBlood(patient.getBloodGroup());
-            patientDetail.setWardNo(patient.getWardNo());
-            patientDetail.setAddress(patient.getAddress());
-            patientDetail.setBirthDate(patient.getBirthDate().toString());
-            return patientDetail;
-        }
-        return null;
     }
 
 }

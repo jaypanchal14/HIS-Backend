@@ -9,6 +9,7 @@ import org.his.repo.AdmitRepo;
 import org.his.repo.LoginRepo;
 import org.his.repo.user.DoctorRepo;
 import org.his.repo.user.PatientRepo;
+import org.his.util.ShiftUtility;
 import org.his.util.Utility;
 import org.jasypt.encryption.StringEncryptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,14 +74,13 @@ public class ReceptionistService {
             //0 : no shift, 1 : 12:00 AM to 08:59 AM, 2 : 09:00 AM to 04:59 PM, 3: 05:00PM to 11:59PM
             //0 : no shift, 1 : 00:00 to 08:59, 2 : 09:00 to 16:59, 3 : 17:00 to 23:59
             int hour = now.getHour();
-//            int hour = 10;
             int currentDayOfWeek = now.getDayOfWeek().getValue();
-            log.info("Current day:"+currentDayOfWeek+", hour: "+hour);
+            //log.info("Current day:"+currentDayOfWeek+", hour: "+hour);
             List<Doctor> doctors = doctorRepo.findAllByIdIn(doctorIds);
 
             //Add logic to filter-out only on-shift doctor
             for (Doctor doctor : doctors) {
-                if(isDoctorOnShift(doctor, hour, currentDayOfWeek)){
+                if(ShiftUtility.isDoctorOnShift(doctor, hour, currentDayOfWeek)){
                     PersonalDetail detail = new PersonalDetail();
                     detail.setFirstName(doctor.getFirstName());
                     detail.setLastName(doctor.getLastName());
@@ -103,33 +103,6 @@ public class ReceptionistService {
         return response;
     }
 
-    private boolean isDoctorOnShift(Doctor doctor, int hour, int currentDayOfWeek) {
-        return switch (currentDayOfWeek) {
-            case 1 ->
-                    (doctor.getMon() == 1 && hour >= 0 && hour < 9) || (doctor.getMon() == 2 && hour >= 9 && hour < 17)
-                            || (doctor.getMon() == 3 && hour >= 17 && hour < 24);
-            case 2 ->
-                    (doctor.getTue() == 1 && hour >= 0 && hour < 9) || (doctor.getTue() == 2 && hour >= 9 && hour < 17)
-                            || (doctor.getTue() == 3 && hour >= 17 && hour < 24);
-            case 3 ->
-                    (doctor.getWed() == 1 && hour >= 0 && hour < 9) || (doctor.getWed() == 2 && hour >= 9 && hour < 17)
-                            || (doctor.getWed() == 3 && hour >= 17 && hour < 24);
-            case 4 ->
-                    (doctor.getThu() == 1 && hour >= 0 && hour < 9) || (doctor.getThu() == 2 && hour >= 9 && hour < 17)
-                            || (doctor.getThu() == 3 && hour >= 17 && hour < 24);
-            case 5 ->
-                    (doctor.getFri() == 1 && hour >= 0 && hour < 9) || (doctor.getFri() == 2 && hour >= 9 && hour < 17)
-                            || (doctor.getFri() == 3 && hour >= 17 && hour < 24);
-            case 6 ->
-                    (doctor.getSat() == 1 && hour >= 0 && hour < 9) || (doctor.getSat() == 2 && hour >= 9 && hour < 17)
-                            || (doctor.getSat() == 3 && hour >= 17 && hour < 24);
-            case 7 ->
-                    (doctor.getSun() == 1 && hour >= 0 && hour < 9) || (doctor.getSun() == 2 && hour >= 9 && hour < 17)
-                            || (doctor.getSun() == 3 && hour >= 17 && hour < 24);
-            default -> false;
-        };
-    }
-
     public GeneralResp registerPatient(PatientDetail request) {
         GeneralResp response = new GeneralResp();
         String profileImage = null;
@@ -139,15 +112,21 @@ public class ReceptionistService {
             if (request.getAadhaar() == null || request.getAadhaar().isBlank()) {
                 throw new RuntimeException("Empty AADHAAR-NUMBER passed in the request");
             }
+
+            //Check if the patient already have one active admit table entry
+            Optional<Admit> existingAdmit = admitRepo.findByPatientIdAndActiveIsTrue(request.getAadhaar());
+            if(existingAdmit.isPresent()){
+                throw new Exception("Patient already have one active admit table entry");
+            }
+
             //check with aadhar, if patient is already existing
             Optional<Patient> optPatient = patientRepo.findById(request.getAadhaar());
-
 
             if (request.getIsNewPatient() == 1) {
                 //New patient
                 //if patient already exists, throw an exception
                 if (optPatient.isPresent()) {
-                    throw new Exception("Patient already exists with this AADHAAR-number, please check the request.");
+                    throw new Exception("Patient already exists with this AADHAAR-number.");
                 }
 
                 validateNewPatientRequest(request);
@@ -167,7 +146,7 @@ public class ReceptionistService {
                 //Existing patient
 
                 if (optPatient.isEmpty()) {
-                    throw new Exception("Patient doesn't exists with this AADHAAR-number, please check the request.");
+                    throw new Exception("Patient doesn't exists with this AADHAAR-number.");
                 }
                 patient = optPatient.get();
                 //Update required fields in patient object
