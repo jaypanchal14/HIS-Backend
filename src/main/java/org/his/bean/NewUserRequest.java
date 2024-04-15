@@ -26,7 +26,7 @@ public class NewUserRequest{
     private String profileImage;
 
     //Only for head-nurse
-    private boolean isHead;
+    private int isHead;
     //@NotBlank
     private String role;
 

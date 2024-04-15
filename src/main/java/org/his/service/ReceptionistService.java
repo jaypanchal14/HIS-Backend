@@ -48,15 +48,10 @@ public class ReceptionistService {
     @Autowired
     private StringEncryptor stringEncryptor;
 
-    public ReceptionDetailResp getAvailableDoctor(String id, String role) {
+    public ReceptionDetailResp getAvailableDoctor(String userId) {
         ReceptionDetailResp response = new ReceptionDetailResp();
         try {
             List<PersonalDetail> personalDetails = new ArrayList<>();
-
-            if (role == null || role.isBlank() || !role.equalsIgnoreCase("RECEPTIONIST")) {
-                response.setError("Request called with invalid role");
-                return response;
-            }
 
             List<ViewUserIdentifier> activeDoctor = loginRepo.getActiveUsersBasedOnRole("DOCTOR");
 
@@ -107,6 +102,7 @@ public class ReceptionistService {
         GeneralResp response = new GeneralResp();
         String profileImage = null;
         Patient patient = null;
+        boolean isFilePresent = false;
         try {
 
             if (request.getAadhaar() == null || request.getAadhaar().isBlank()) {
@@ -131,8 +127,12 @@ public class ReceptionistService {
 
                 validateNewPatientRequest(request);
 
-                String extension = Utility.getFileExtension(request.getImage());
-                profileImage = Utility.generateNewImageName(extension);
+                if(request.getImage() != null && !request.getImage().isEmpty()){
+                    isFilePresent = true;
+
+                    String extension = Utility.getFileExtension(request.getImage());
+                    profileImage = Utility.generateNewImageName(extension);
+                }
 
                 patient = getNewPatientFromRequest(request);
                 patient.setProfileImage(profileImage);
@@ -140,7 +140,10 @@ public class ReceptionistService {
                 patientRepo.save(patient);
                 admitRepo.save(admit);
 
-                fileService.savePatientProfile(request.getImage(), profileImage);
+                if(isFilePresent){
+                    //Only save image if it's found in the request
+                    fileService.savePatientProfile(request.getImage(), profileImage);
+                }
 
             } else {
                 //Existing patient
@@ -156,13 +159,7 @@ public class ReceptionistService {
                 Admit admit = getNewAdmitObjectForRequest(patient, request);
 
                 patientRepo.save(patient);
-//                Integer count = patientRepo.updatePatientRegistration(request.getAadhaar(), patient.getPatientType(), patient.getWardNo());
-//                if(count==0){
-//                    log.error("Patient info not updated for existing patient with aadhar");
-//                    throw new Exception("Patient info not updated for existing patient with aadhar");
-//                }
                 admitRepo.save(admit);
-
             }
 
             //Generate success response
@@ -180,7 +177,7 @@ public class ReceptionistService {
     private void validateNewPatientRequest(PatientDetail request) throws Exception {
         if (request.getAadhaar() == null || request.getAadhaar().isBlank() ||
                 request.getFirstName() == null || request.getFirstName().isBlank() ||
-                request.getLastName() == null || request.getLastName().isBlank() ||
+//                request.getLastName() == null || request.getLastName().isBlank() ||
                 request.getPhone() == null || request.getPhone().isBlank() ||
                 request.getGender() == null || request.getGender().isBlank() ||
                 request.getBlood() == null || request.getBlood().isBlank() ||
@@ -188,9 +185,10 @@ public class ReceptionistService {
             throw new Exception("Empty field-value passed in the mandatory fields");
         }
 
-        if (request.getImage() == null || request.getImage().isEmpty() || !Utility.isImage(Path.of(request.getImage().getOriginalFilename()))) {
-            throw new Exception("Please pass valid image");
-        }
+        //As possible that no image passed while registration
+//        if (request.getImage() == null || request.getImage().isEmpty() || !Utility.isImage(Path.of(request.getImage().getOriginalFilename()))) {
+//            throw new Exception("Please pass valid image");
+//        }
 
     }
 
@@ -202,7 +200,11 @@ public class ReceptionistService {
         admit.setPatientType(patient.getPatientType());
         admit.setActive(true);
         admit.setEmergency(false);
-        admit.setRemark(stringEncryptor.encrypt(request.getRemark()));
+        if(request.getRemark() != null && !request.getRemark().isBlank()){
+            admit.setRemark(stringEncryptor.encrypt(request.getRemark()));
+        }else{
+            admit.setRemark(null);
+        }
         return admit;
     }
 
@@ -253,7 +255,11 @@ public class ReceptionistService {
         detail.setLastName(patient.getLastName());
         detail.setGender(stringEncryptor.decrypt(patient.getGender()));
         detail.setPhone(stringEncryptor.decrypt(patient.getPhoneNumber()));
-        detail.setAadhaar(stringEncryptor.decrypt(patient.getAddress()));
+        if(patient.getAddress() != null && !patient.getAddress().isBlank()){
+            detail.setAddress(stringEncryptor.decrypt(patient.getAddress()));
+        }else{
+            detail.setAddress("");
+        }
         return detail;
     }
 
@@ -262,12 +268,24 @@ public class ReceptionistService {
         newPatient.setAadhar(request.getAadhaar());
         newPatient.setFirstName(request.getFirstName().toLowerCase());
         newPatient.setLastName(request.getLastName().toLowerCase());
-        newPatient.setEmail(stringEncryptor.encrypt(request.getEmail().toLowerCase()));
+        if(request.getEmail() !=null && !request.getEmail().isBlank()){
+            newPatient.setEmail(stringEncryptor.encrypt(request.getEmail().toLowerCase()));
+        }else{
+            newPatient.setEmail(null);
+        }
         newPatient.setGender(stringEncryptor.encrypt(request.getGender()));
         newPatient.setBirthDate(Date.valueOf(request.getBirthDate()));
-        newPatient.setPhoneNumber(stringEncryptor.encrypt(request.getPhone()));
+        if(request.getPhone() !=null && !request.getPhone().isBlank()) {
+            newPatient.setPhoneNumber(stringEncryptor.encrypt(request.getPhone()));
+        }else{
+            newPatient.setPhoneNumber(null);
+        }
         newPatient.setBloodGroup(stringEncryptor.encrypt(request.getBlood()));
-        newPatient.setAddress(stringEncryptor.encrypt(request.getAddress()));
+        if(request.getAddress()!=null && !request.getAddress().isBlank()){
+            newPatient.setAddress(stringEncryptor.encrypt(request.getAddress()));
+        }else{
+            newPatient.setAddress(null);
+        }
         //While registering, it would be OP by default
         newPatient.setPatientType("OP");
         //Assigning empty wardNo at the beginning

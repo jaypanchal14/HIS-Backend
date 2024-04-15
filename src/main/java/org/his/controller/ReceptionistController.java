@@ -28,11 +28,9 @@ public class ReceptionistController {
     }*/
 
     @GetMapping("/reception/getAvailableDoctor")
-    public ResponseEntity<ReceptionDetailResp> getAvailableDoctor(
-            @RequestParam("role") String role,
-            @RequestParam("id") String id
-    ) {
-        ReceptionDetailResp resp = receptionistService.getAvailableDoctor(id, role);
+    public ResponseEntity<ReceptionDetailResp> getAvailableDoctor(@RequestParam("userId") String userId) {
+        log.info("getAvailableDoctor | request received to view available doctor");
+        ReceptionDetailResp resp = receptionistService.getAvailableDoctor(userId);
         if(resp.getError() == null){
             return ResponseEntity.status(HttpStatus.OK).body(resp);
         }else{

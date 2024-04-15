@@ -420,6 +420,9 @@ public class AdminService {
         n.setBirthDate(Date.valueOf(request.getBirthDate()));
         n.setPhoneNumber(request.getPhone());
         n.setBloodGroup(request.getBlood());
+        if(request.getIsHead()==1){
+            n.setHead(true);
+        }
         //Need to be added in FIGMA and FrontEnd for doctor and nurse
         //n.setDepartment(request.getDepartment());
         n.setExperience(request.getExperience());
@@ -444,6 +447,9 @@ public class AdminService {
         doc.setAddress(request.getAddress());
         doc.setProfileImage(request.getProfileImage());
         doc.setUpdatedAt(OffsetDateTime.now());
+        if(request.getIsHead()==1){
+            doc.setHead(true);
+        }
         return doc;
     }
 

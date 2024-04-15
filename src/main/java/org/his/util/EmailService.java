@@ -50,7 +50,7 @@ public class EmailService {
             helper.setSubject("Password reset email from HIS-Application");
             helper.setText(Utility.initialForgotPass+newPass+Utility.endForgotPass);
             mailSender.send(mimeMsg);
-            log.info("Email sent to the user with password");
+//            log.info("Email sent to the user with password");
         }catch (Exception e){
             log.error("Exception occurred with msg: "+e.getMessage());
             return false;

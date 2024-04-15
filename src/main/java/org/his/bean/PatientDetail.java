@@ -20,7 +20,7 @@ public class PatientDetail {
     private String birthDate;
     private String blood;
     private String address;
-    private MultipartFile image;
+    private MultipartFile image;    //This will only be used when it comes in API request
     private String remark;
 
     //Below fields are used for other operations related to patients

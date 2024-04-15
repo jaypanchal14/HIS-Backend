@@ -1,6 +1,7 @@
 package org.his.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.his.DiagnosisItem;
@@ -26,6 +27,7 @@ import org.his.util.Utility;
 import org.jasypt.encryption.StringEncryptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -141,10 +143,18 @@ public class PatientService {
             detail = new PatientDetail();
             detail.setAadhaar(obj.getAadhar());
             detail.setAdmitId(admit.getAdmitId());
-            detail.setRemark(stringEncryptor.decrypt(admit.getRemark()));
+            if(admit.getRemark()!=null && !admit.getRemark().isBlank()){
+                detail.setRemark(stringEncryptor.decrypt(admit.getRemark()));
+            }else{
+                detail.setRemark("");
+            }
             detail.setFirstName(obj.getFirstName());
             detail.setLastName(obj.getLastName());
-            detail.setPhone(stringEncryptor.decrypt(obj.getPhoneNumber()));
+            if(obj.getPhoneNumber()!=null && !obj.getPhoneNumber().isBlank()){
+                detail.setPhone(stringEncryptor.decrypt(obj.getPhoneNumber()));
+            }else{
+                detail.setPhone("");
+            }
             detail.setGender(stringEncryptor.decrypt(obj.getGender()));
             detail.setBlood(stringEncryptor.decrypt(obj.getBloodGroup()));
             detail.setWardNo(obj.getWardNo());
@@ -187,7 +197,6 @@ public class PatientService {
             role = role.toUpperCase();
 
             validateRoleAndUserId(role, userId);
-
 
             List<PatientDetail> livePatients = new ArrayList<>();
             Optional<Admit> admitOptional = admitRepo.findByAdmitIdAndActiveIsTrue(admitId);
@@ -238,15 +247,27 @@ public class PatientService {
             patientDetail.setFirstName(patient.getFirstName());
             patientDetail.setLastName(patient.getLastName());
             patientDetail.setPatientType(admit.getPatientType());
-            patientDetail.setEmail(stringEncryptor.decrypt(patient.getEmail()));
-            patientDetail.setPhone(stringEncryptor.decrypt(patient.getPhoneNumber()));
+            if(patient.getEmail() !=null && !patient.getEmail().isBlank()){
+                patientDetail.setEmail(stringEncryptor.decrypt(patient.getEmail()));
+            }else{
+                patientDetail.setEmail(null);
+            }
+            if(patient.getPhoneNumber() !=null && !patient.getPhoneNumber().isBlank()){
+                patientDetail.setPhone(stringEncryptor.decrypt(patient.getPhoneNumber()));
+            }else{
+                patientDetail.setPhone("");
+            }
             patientDetail.setGender(stringEncryptor.decrypt(patient.getGender()));
             patientDetail.setBlood(stringEncryptor.decrypt(patient.getBloodGroup()));
-            patientDetail.setAddress(stringEncryptor.decrypt(patient.getAddress()));
+            if(patient.getAddress()!=null && !patient.getAddress().isBlank()){
+                patientDetail.setAddress(stringEncryptor.decrypt(patient.getAddress()));
+            }else{
+                patientDetail.setAddress(null);
+            }
             patientDetail.setBirthDate(patient.getBirthDate().toString());
             patientDetail.setWardNo(patient.getWardNo());
 
-            patientDetail.setPatientImage(fileService.loadPatientImage(patient.getProfileImage()));
+            //patientDetail.setPatientImage(fileService.loadPatientImage(patient.getProfileImage()));
 
             return patientDetail;
         }
@@ -271,6 +292,15 @@ public class PatientService {
 
             request = objectMapper.readValue(payload, DiagnosisItem.class);
 
+            if(request.getAdmitId() == null || request.getAdmitId().isBlank()){
+                throw new RequestValidationException("Empty admitId passed in the request");
+            }
+
+            Optional<Admit> optAdmit = admitRepo.findByAdmitIdAndActiveIsTrue(request.getAdmitId());
+            if(optAdmit.isEmpty()){
+                throw new RequestValidationException("Invalid/Inactive admitId passed in the request");
+            }
+
             //Save file only if it's passed in the request
             if(file != null && !file.isEmpty()){
                 isFilePresent = true;
@@ -286,18 +316,25 @@ public class PatientService {
             if(request.getMedicine() != null && !request.getMedicine().isEmpty()){
                 prescription = getPrescriptionForNewRequest(diagnosis, request);
                 prescriptionRepo.save(prescription);
-
             }
             diagnosisRepo.save(diagnosis);
 
             //TODO : Handle case of discharge based on discharge variable of request
+            if(request.getDischarge() == 1){
+                Integer count = admitRepo.updateAdmitStatus(request.getAdmitId(), false);
+                if(count==1){
+                    log.info("addDiagnosis | marked the patient as inActive in admit table");
+                }else{
+                    log.error("addDiagnosis | unable to mark the patient as inActive in admit table");
+                }
+            }
 
             if(isFilePresent){
                 fileService.savePatientDiagnosis(file, diagnosisFile);
             }
 
             resp.setResponse("SUCCESS");
-            log.info("Diagnosis added successfully.");
+            log.info("addDiagnosis | Diagnosis added successfully.");
         } catch (RequestValidationException e) {
             log.error("addDiagnosis | RequestValidationException occurred: " + e.getMessage());
             resp.setError(e.getMessage());
@@ -318,14 +355,22 @@ public class PatientService {
         obj.setUserId(diagnosis.getUserId());
         obj.setDiagnosisId(diagnosis.getDiagnosisId());
         obj.setPharmaId(null);
-        obj.setMedicine(objectMapper.writeValueAsString(request.getMedicine()));
+        if(request.getMedicine() != null && !request.getMedicine().isEmpty()){
+            obj.setMedicine(objectMapper.writeValueAsString(request.getMedicine()));
+        }else{
+            obj.setMedicine(null);
+        }
         return obj;
     }
 
     private Diagnosis getDiagnosisForNewRequest(DiagnosisItem request, String role, String userId) {
         Diagnosis diagnosis = new Diagnosis();
         diagnosis.setDiagnosisId(Utility.getUniqueId());
-        diagnosis.setRemark(stringEncryptor.encrypt(request.getRemarks()));
+        if(request.getRemarks()!=null && !request.getRemarks().isBlank()){
+            diagnosis.setRemark(stringEncryptor.encrypt(request.getRemarks()));
+        }else{
+            diagnosis.setRemark(null);
+        }
         diagnosis.setAdmitId(request.getAdmitId());
         diagnosis.setRole(role);
         diagnosis.setUserId(userId);
@@ -361,10 +406,7 @@ public class PatientService {
             Set<String> listOfDiagnosisId = new HashSet<>();
 
             for(Diagnosis obj : list){
-                if(!listOfDiagnosisId.contains(obj.getDiagnosisId())){
-                    listOfDiagnosisId.add(obj.getDiagnosisId());
-                }
-
+                listOfDiagnosisId.add(obj.getDiagnosisId());
             }
             List<Prescription> prescriptionList = prescriptionRepo.findAllByDiagnosisIdIn(listOfDiagnosisId);
             for(Prescription p : prescriptionList){
@@ -376,7 +418,12 @@ public class PatientService {
                 item.setPatientId(admit.getPatientId());
                 if(mapping.containsKey(obj.getDiagnosisId())){
                     tmp = mapping.get(obj.getDiagnosisId()).getMedicine();
-                    item.setMedicine(objectMapper.readValue(tmp, Map.class));
+                    if(tmp!=null && !tmp.isBlank()){
+                        item.setMedicine(objectMapper.readValue(tmp, new TypeReference<Map<String, Integer>>(){}));
+                    }else{
+                        Map<String, Integer> map = new HashMap<>();
+                        item.setMedicine(map);
+                    }
                 }
                 itemList.add(item);
             }
@@ -399,7 +446,11 @@ public class PatientService {
         item.setAdmitId(obj.getAdmitId());
         item.setFile(obj.getFile());
         item.setDate(Utility.getFormattedOffsetTime(obj.getDate()));
-        item.setRemarks(stringEncryptor.decrypt(obj.getRemark()));
+        if(obj.getRemark()!=null && !obj.getRemark().isBlank()){
+            item.setRemarks(stringEncryptor.decrypt(obj.getRemark()));
+        }else{
+            item.setRemarks("");
+        }
         return item;
     }
 

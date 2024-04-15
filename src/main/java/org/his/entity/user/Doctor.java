@@ -25,6 +25,7 @@ public class Doctor {
     //store it number of months
     private int experience;
     private String address;
+    private boolean isHead;
 
     //To store the path where image is actually stored
     private String profileImage;
