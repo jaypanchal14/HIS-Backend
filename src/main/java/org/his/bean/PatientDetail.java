@@ -23,9 +23,12 @@ public class PatientDetail {
     private MultipartFile image;
     private String remark;
 
+    //Below fields are used for other operations related to patients
     private String wardNo;
     private String action;
     private String admitId;
+    //This would be in Base64 encoded string
+    private String patientImage;
 
 
 }

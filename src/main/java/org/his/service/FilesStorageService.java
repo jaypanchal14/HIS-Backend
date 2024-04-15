@@ -82,6 +82,11 @@ public class FilesStorageService {
         log.info("Patient-image uploaded :" +newName);
     }
 
+    public void savePatientDiagnosis(MultipartFile file, String newName) throws IOException {
+        Files.copy(file.getInputStream(), patientRoot.resolve(newName));
+        log.info("Patient-Diagnosis uploaded :" +newName);
+    }
+
     public String loadPatientImage(String filename) {
         try {
             Path file = patientRoot.resolve(filename);

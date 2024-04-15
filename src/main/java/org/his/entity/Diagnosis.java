@@ -16,9 +16,10 @@ public class Diagnosis {
     @Id
     private String diagnosisId;
     private String admitId;
-    private String doctorId;
+    private String userId;
+    private String role;
     private String remark;
-    private String imgPath;
+    private String file;
     @CreationTimestamp
     private OffsetDateTime date;
 

@@ -19,7 +19,8 @@ public class Prescription {
     private String medicine;
     private String diagnosisId;
     private String pharmaId;
-    private String doctorId;
+    private String userId;
+    private String role;
     @CreationTimestamp
     private OffsetDateTime date;
 
