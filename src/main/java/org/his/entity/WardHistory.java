@@ -16,8 +16,6 @@ public class WardHistory {
     private String historyId;
     private String patientId;
     private String wardNo;
-    private String wardType;
-    private OffsetDateTime inDate;
-    private OffsetDateTime outDate;
+    private OffsetDateTime date;
 
 }

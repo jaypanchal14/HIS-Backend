@@ -2,12 +2,14 @@ package org.his.service;
 import lombok.extern.slf4j.Slf4j;
 import org.his.bean.*;
 import org.his.entity.Ward;
+import org.his.entity.WardHistory;
 import org.his.entity.user.Doctor;
 import org.his.entity.user.Nurse;
 import org.his.entity.user.Patient;
 import org.his.exception.NoSuchAccountException;
 import org.his.exception.RequestValidationException;
 import org.his.repo.AdmitRepo;
+import org.his.repo.WardHistoryRepo;
 import org.his.repo.WardRepo;
 import org.his.repo.user.NurseRepo;
 import org.his.repo.user.PatientRepo;
@@ -19,6 +21,7 @@ import org.springframework.stereotype.Service;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +45,8 @@ public class NurseService {
 
     @Autowired
     private AdmitRepo admitRepo;
+    @Autowired
+    private WardHistoryRepo wardHistoryRepo;
 
     public ReceptionDetailResp getOnShiftNurses(String id, String role) {
         ReceptionDetailResp response = new ReceptionDetailResp();
@@ -192,11 +197,33 @@ public class NurseService {
             ward.setFirstName(p.getFirstName());
             ward.setLastName(p.getLastName());
             ward.setEmpty(false);
+
+            //Add the entry of wardNo in Patient Entity
+            Optional<Patient> pd = patientRepo.findById(ward.getPatientId());
+            Patient patient=pd.get();
+            patient.setWardNo(ward.getWardNo());
+            patient.setPatientType("IP");
+
         } else {
             if (ward.getPatientId() == null || !ward.getPatientId().equals(patientDetail.getAadhaar())) {
                 response.setError("Patient is not allocated to this ward.");
                 return response;
             }
+
+            //Remove the entry of wardNo in Patient Entity
+            Optional<Patient> pd = patientRepo.findById(ward.getPatientId());
+            Patient patient=pd.get();
+            patient.setWardNo(null);
+            patient.setPatientType("OP");
+
+            //make the entry in ward history
+            WardHistory wardHistory=new WardHistory();
+            wardHistory.setHistoryId(Utility.getUniqueId());
+            wardHistory.setWardNo(ward.getWardNo());
+            wardHistory.setPatientId(ward.getPatientId());
+            wardHistory.setDate(OffsetDateTime.now());
+            wardHistoryRepo.save(wardHistory);
+
             ward.setPatientId(null);
             ward.setFirstName(null);
             ward.setLastName(null);
