@@ -1,9 +1,7 @@
 package org.his.bean;
 
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
@@ -16,7 +14,6 @@ public class NewUserRequest{
     private String email;
     private String phone;
     private String gender;
-    @NotBlank
     private String birthDate;
     private String blood;
     private String specialization;

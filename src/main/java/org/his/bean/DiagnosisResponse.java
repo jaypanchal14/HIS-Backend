@@ -2,7 +2,6 @@ package org.his.bean;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
-import org.his.DiagnosisItem;
 
 import java.util.List;
 

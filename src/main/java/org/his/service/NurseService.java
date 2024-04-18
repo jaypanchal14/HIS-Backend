@@ -3,7 +3,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.his.bean.*;
 import org.his.entity.Ward;
 import org.his.entity.WardHistory;
-import org.his.entity.user.Doctor;
 import org.his.entity.user.Nurse;
 import org.his.entity.user.Patient;
 import org.his.exception.NoSuchAccountException;
@@ -18,8 +17,6 @@ import org.his.util.Utility;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;

@@ -25,6 +25,17 @@ public class AdminController {
     @Autowired
     private AdminService adminService;
 
+    @GetMapping("/admin/home")
+    public ResponseEntity<?> getHome(@RequestParam(name="userId") String userId){
+        log.info("getHome | Request received for getting admin-dashboard");
+        DashboardResponse resp = adminService.getHome(userId);
+        if(resp.getError() == null){
+            return ResponseEntity.status(HttpStatus.OK).body(resp);
+        }else{
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
+        }
+    }
+
     @PostMapping("/admin/updateSchedule")
     public ResponseEntity<?> updateSchedule(@RequestBody ScheduleDetail request){
         log.info("updateSchedule | Request received for updating schedule");
@@ -70,9 +81,12 @@ public class AdminController {
     }
 
     @PostMapping(path = "/admin/addUser")
-    public ResponseEntity<?> addUser(@RequestPart(name = "image")MultipartFile image, @RequestParam(name = "request") String request){
+    public ResponseEntity<?> addUser(@RequestPart(name = "image")MultipartFile image,
+                                     @RequestParam(name = "request") String request,
+                                     @RequestParam(name = "userId") String userId
+    ){
         log.info("addUser | Request received to add new user by admin.");
-        GeneralResp resp = adminService.addNewUser(request, image);
+        GeneralResp resp = adminService.addNewUser(request, image, userId);
         if(resp.getError() == null){
             return ResponseEntity.status(HttpStatus.OK).body(resp);
         }else{
@@ -81,9 +95,9 @@ public class AdminController {
     }
 
     @GetMapping("/admin/viewUsers")
-    public ResponseEntity<?> viewUsers(@RequestParam(required = false) String role){
+    public ResponseEntity<?> viewUsers(@RequestParam(required = false) String role, @RequestParam(name = "userId") String userId){
         log.info("viewUsers | Request received for viewing the users.");
-        ViewUserResponse resp = adminService.getUsers(role);
+        ViewUserResponse resp = adminService.getUsers(userId, role);
         if(resp.getError() == null){
             return ResponseEntity.status(HttpStatus.OK).body(resp);
         }else{

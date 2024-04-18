@@ -2,13 +2,19 @@ package org.his.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.his.bean.*;
+import org.his.config.Roles;
 import org.his.entity.Admit;
+import org.his.entity.Login;
 import org.his.entity.user.Doctor;
 import org.his.entity.user.Patient;
+import org.his.entity.user.Receptionist;
+import org.his.exception.NoSuchAccountException;
+import org.his.exception.RequestValidationException;
 import org.his.repo.AdmitRepo;
 import org.his.repo.LoginRepo;
 import org.his.repo.user.DoctorRepo;
 import org.his.repo.user.PatientRepo;
+import org.his.repo.user.ReceptionistRepo;
 import org.his.util.ShiftUtility;
 import org.his.util.Utility;
 import org.jasypt.encryption.StringEncryptor;
@@ -34,6 +40,9 @@ public class ReceptionistService {
 
     @Autowired
     private DoctorRepo doctorRepo;
+
+    @Autowired
+    private ReceptionistRepo receptionRepo;
 
     @Autowired
     private PatientRepo patientRepo;
@@ -291,6 +300,56 @@ public class ReceptionistService {
         //Assigning empty wardNo at the beginning
         newPatient.setWardNo("");
         return newPatient;
+    }
+
+    public DashboardResponse getHome(String userId) {
+        DashboardResponse resp = new DashboardResponse();
+        try{
+            if(userId==null || userId.isBlank()){
+                throw new RequestValidationException("Empty value receives in userId");
+            }
+
+            Optional<Login> optLogin = loginRepo.findAccountByUserId(userId, Roles.RECEPTIONIST.toString());
+            if(optLogin.isEmpty()){
+                throw new NoSuchAccountException("Invalid userId passed in the request");
+            }
+            String email = optLogin.get().getUsername();
+            Optional<Receptionist> optReception = receptionRepo.findById(userId);
+            if (optReception.isEmpty()) {
+                resp.setError("Username not found");
+            } else {
+                PersonalDetail detail = getDetailForReceptionist(optReception.get());
+                detail.setEmail(email);
+                resp.setDetail(detail);
+            }
+
+        } catch (RequestValidationException e){
+            log.error("getPersonalDetail | RequestValidationException occurred: "+e.getMessage());
+            resp.setError(e.getMessage());
+        } catch(NoSuchAccountException e){
+            log.error("getPersonalDetail | NoSuchAccountException occurred: "+e.getMessage());
+            resp.setError(e.getMessage());
+        } catch(Exception e){
+            log.error("getPersonalDetail | Exception occurred: "+e.getMessage());
+            resp.setError(e.getMessage());
+        }
+        return resp;
+    }
+
+    private PersonalDetail getDetailForReceptionist(Receptionist receptionist) {
+        PersonalDetail obj = new PersonalDetail();
+        obj.setRole("RECEPTIONIST");
+        obj.setFirstName(receptionist.getFirstName());
+        obj.setLastName(receptionist.getLastName());
+        obj.setAddress(receptionist.getAddress());
+        obj.setBirthDate(receptionist.getBirthDate().toString());
+        obj.setBlood(receptionist.getBloodGroup());
+        obj.setGender(receptionist.getGender());
+        obj.setPhone(receptionist.getPhoneNumber());
+        if(receptionist.getProfileImage() != null && !receptionist.getProfileImage().isBlank()){
+            obj.setProfileImage(fileService.loadUserImage(receptionist.getProfileImage()));
+        }
+        return obj;
     }
 
 }

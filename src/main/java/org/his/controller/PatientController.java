@@ -27,7 +27,8 @@ public class PatientController {
             @RequestParam(name="isOP") int isOP,
             @RequestParam(name="userId") String userId
     ){
-        log.info("viewLivePatients | Request received for getting active patients.");
+        log.info("viewLivePatients | Request received for getting active patients");
+        log.info("user: "+userId+", role: "+role+", isOP: "+isOP );
         PatientResponse resp = patientService.viewLivePatients(role, userId, isOP);
         if(resp.getError() == null){
             return ResponseEntity.status(HttpStatus.OK).body(resp);

@@ -37,8 +37,8 @@ public class LoginService {
                 msg = "Please pass valid values in request.";
                 throw new AuthenticationException("Empty values passed in the request");
             }
-            //Optional<Login> optAccount = loginRepo.findById(request.getUsername());
-            Optional<Login> optAccount = loginRepo.findAccountByUsername(request.getUsername(), request.getRole());
+            Optional<Login> optAccount = loginRepo.findById(request.getUsername());
+//            Optional<Login> optAccount = loginRepo.findAccountByUsername(request.getUsername(), request.getRole());
             if (optAccount.isEmpty()) {
                 msg = "Username not found in the database.";
                 throw new AuthenticationException(msg);
@@ -50,6 +50,7 @@ public class LoginService {
                     log.info("User authenticated successfully.");
                     resp.setToken(jwtUtils.generateToken(request.getUsername(), Collections.singletonList(request.getRole())));
                     resp.setResponse("SUCCESS");
+                    resp.setRole(account.getRole());
                     resp.setUserId(account.getUserId());
                     return resp;
                 } else {
@@ -121,10 +122,8 @@ public class LoginService {
         if (request.getUsername() == null || request.getUsername().isEmpty()) {
             return true;
         }
-        if (request.getPassword() == null || request.getPassword().isEmpty()) {
-            return true;
-        }
-        return request.getRole() == null || request.getRole().isEmpty();
+        return request.getPassword() == null || request.getPassword().isEmpty();
+        //return request.getRole() == null || request.getRole().isEmpty();
     }
 
     private boolean validateChangePass(AuthRequest request) {

@@ -19,13 +19,19 @@ public class ReceptionistController {
     private ReceptionistService receptionistService;
 
 
-    /*
+
     @GetMapping("/reception/home")
-    public ResponseEntity<?> getHome(){
+    public ResponseEntity<?> getHome(@RequestParam(name = "userId") String userId){
         //As we are passing personalDetails with commonController endpoint, we are not going to implement this.
         // On the home screen of the receptionist, no other details is required
-        return null;
-    }*/
+        log.info("getHome | request received for showing home-details of a receptionist");
+        DashboardResponse resp = receptionistService.getHome(userId);
+        if(resp.getError() == null){
+            return ResponseEntity.status(HttpStatus.OK).body(resp);
+        }else{
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
+        }
+    }
 
     @GetMapping("/reception/getAvailableDoctor")
     public ResponseEntity<ReceptionDetailResp> getAvailableDoctor(@RequestParam("userId") String userId) {

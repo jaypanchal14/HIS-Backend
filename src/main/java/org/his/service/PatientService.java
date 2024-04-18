@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.his.DiagnosisItem;
+import org.his.bean.DiagnosisItem;
 import org.his.bean.DiagnosisResponse;
 import org.his.bean.GeneralResp;
 import org.his.bean.PatientDetail;
@@ -27,7 +27,6 @@ import org.his.util.Utility;
 import org.jasypt.encryption.StringEncryptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -69,7 +68,7 @@ public class PatientService {
 
     public PatientResponse viewLivePatients(String role, String userId, int isOP) {
         PatientResponse response = new PatientResponse();
-        List<PatientDetail> livePatients;
+        List<PatientDetail> livePatients = new ArrayList<>();
         List<Admit> admits;
         try {
 
@@ -84,21 +83,58 @@ public class PatientService {
                     throw new RequestValidationException("Unsupported role passed in the request");
                 }
 
-                if (!isValidDoctor(userId)) {
-                    response.setError("Invalid Doctor credentials or unauthorized access.");
-                    return response;
+                Doctor doctor = doctorRepo.findById(userId).orElse(null);
+                if (doctor == null) {
+                    throw new RequestValidationException("Doctor not found in the doctor table");
                 }
-
-                admits = admitRepo.findAllByActiveAndPatientType(true, "OP");
-                livePatients = getLivePatientsFromAdmitList(admits);
+                LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
+                int hour = now.getHour();
+                int currentDayOfWeek = now.getDayOfWeek().getValue();
+                if(ShiftUtility.isDoctorOnShift(doctor, hour, currentDayOfWeek)){
+                    admits = admitRepo.findAllByActiveAndPatientType(true, "OP");
+                    livePatients = getLivePatientsFromAdmitList(admits);
+                }else{
+                    log.info("Doctor is not on the shift hour:" +hour+", day:"+currentDayOfWeek);
+                }
 
             } else if (isOP == 0) {
                 //accessible by both NURSE and DOCTOR
 
-                validateRoleAndUserId(role, userId);
+                if (!role.equals("DOCTOR") && !role.equals("NURSE")) {
+                    throw new RequestValidationException("Unsupported role passed in the request");
+                }
 
-                admits = admitRepo.findAllByActiveAndPatientType(true, "IP");
-                livePatients = getLivePatientsFromAdmitList(admits);
+                if (role.equals("NURSE")) {
+                    Nurse nurse = nurseRepo.findById(userId).orElse(null);
+                    if (nurse == null) {
+                        throw new RequestValidationException("nurse not found in the nurse table");
+                    }
+                    LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
+                    int hour = now.getHour();
+                    int currentDayOfWeek = now.getDayOfWeek().getValue();
+                    if(ShiftUtility.isNurseOnShift(nurse, hour, currentDayOfWeek)){
+                        admits = admitRepo.findAllByActiveAndPatientType(true, "OP");
+                        livePatients = getLivePatientsFromAdmitList(admits);    
+                    }else{
+                        log.info("Nurse is not on the shift hour:" +hour+", day:"+currentDayOfWeek);
+                    }
+                }
+                if (role.equals("DOCTOR")) {
+                    Doctor doctor = doctorRepo.findById(userId).orElse(null);
+                    if (doctor == null) {
+                        throw new RequestValidationException("Invalid Doctor credentials or unauthorized access.");
+                    }
+                    LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
+                    int hour = now.getHour();
+                    int currentDayOfWeek = now.getDayOfWeek().getValue();
+                    if(ShiftUtility.isDoctorOnShift(doctor, hour, currentDayOfWeek)){
+                        admits = admitRepo.findAllByActiveAndPatientType(true, "OP");
+                        livePatients = getLivePatientsFromAdmitList(admits);
+                    }else{
+                        log.info("Doctor is not on the shift hour:" +hour+", day:"+currentDayOfWeek);
+
+                    }
+                }
 
             } else {
                 throw new RequestValidationException("Invalid value passed in isOP parameter");

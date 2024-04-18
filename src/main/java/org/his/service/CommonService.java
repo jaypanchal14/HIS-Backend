@@ -2,8 +2,11 @@ package org.his.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.his.bean.*;
+import org.his.entity.Login;
 import org.his.entity.user.*;
 import org.his.exception.AuthenticationException;
+import org.his.exception.NoSuchAccountException;
+import org.his.exception.RequestValidationException;
 import org.his.repo.LoginRepo;
 import org.his.repo.user.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,61 +42,82 @@ public class CommonService {
     public PersonalDetailResp getPersonalDetail(String id, String role){
         PersonalDetailResp resp = new PersonalDetailResp();
 
-        switch(role) {
-            case "ADMIN":
-                Optional<Admin> optAdmin = adminRepo.findById(id);
-                if (optAdmin.isEmpty()) {
-                    resp.setError("Username not found");
-                }else{
-                    PersonalDetail detail = getDetailForAdmin(optAdmin.get());
-                    resp.setResponse(detail);
-                }
-                break;
+        try {
 
-            case "NURSE":
-                Optional<Nurse> optNurse = nurseRepo.findById(id);
-                if (optNurse.isEmpty()) {
-                    resp.setError("Username not found");
-                }else{
-                    PersonalDetail detail = getDetailForNurse(optNurse.get());
-                    resp.setResponse(detail);
-                }
-                break;
+            if(id==null || id.isBlank() || role==null || role.isBlank()){
+                throw new RequestValidationException("Empty value passed in id/role");
+            }
+            role = role.toUpperCase();
 
-            case "DOCTOR":
-                Optional<Doctor> optDoc = doctorRepo.findById(id);
-                if (optDoc.isEmpty()) {
-                    resp.setError("Username not found");
-                }else{
-                    PersonalDetail detail = getDetailForDoc(optDoc.get());
-                    resp.setResponse(detail);
-                }
-                break;
+            Optional<Login> l = loginRepo.findAccountByUserId(id, role);
+            if(l.isEmpty()){
+                throw new NoSuchAccountException("Invalid userId passed in the request");
+            }
 
-            case "PHARMACIST":
-                Optional<Pharma> optPharma = pharmaRepo.findById(id);
-                if (optPharma.isEmpty()) {
-                    resp.setError("Username not found");
-                }else{
-                    PersonalDetail detail = getDetailForPharma(optPharma.get());
-                    resp.setResponse(detail);
-                }
-                break;
+            switch (role) {
+                case "ADMIN":
+                    Optional<Admin> optAdmin = adminRepo.findById(id);
+                    if (optAdmin.isEmpty()) {
+                        resp.setError("Username not found");
+                    } else {
+                        PersonalDetail detail = getDetailForAdmin(optAdmin.get());
+                        resp.setResponse(detail);
+                    }
+                    break;
 
-            case "RECEPTIONIST":
-                Optional<Receptionist> optReception = receptionRepo.findById(id);
-                if (optReception.isEmpty()) {
-                    resp.setError("Username not found");
-                }else{
-                    PersonalDetail detail = getDetailForReceptionist(optReception.get());
-                    resp.setResponse(detail);
-                }
-                break;
-            default:
-                log.error("Undefined role passed in the request.");
-                resp.setError("Undefined role passed in the request");
+                case "NURSE":
+                    Optional<Nurse> optNurse = nurseRepo.findById(id);
+                    if (optNurse.isEmpty()) {
+                        resp.setError("Username not found");
+                    } else {
+                        PersonalDetail detail = getDetailForNurse(optNurse.get());
+                        resp.setResponse(detail);
+                    }
+                    break;
+
+                case "DOCTOR":
+                    Optional<Doctor> optDoc = doctorRepo.findById(id);
+                    if (optDoc.isEmpty()) {
+                        resp.setError("Username not found");
+                    } else {
+                        PersonalDetail detail = getDetailForDoc(optDoc.get());
+                        resp.setResponse(detail);
+                    }
+                    break;
+
+                case "PHARMACIST":
+                    Optional<Pharma> optPharma = pharmaRepo.findById(id);
+                    if (optPharma.isEmpty()) {
+                        resp.setError("Username not found");
+                    } else {
+                        PersonalDetail detail = getDetailForPharma(optPharma.get());
+                        resp.setResponse(detail);
+                    }
+                    break;
+
+                case "RECEPTIONIST":
+                    Optional<Receptionist> optReception = receptionRepo.findById(id);
+                    if (optReception.isEmpty()) {
+                        resp.setError("Username not found");
+                    } else {
+                        PersonalDetail detail = getDetailForReceptionist(optReception.get());
+                        resp.setResponse(detail);
+                    }
+                    break;
+                default:
+                    log.error("Undefined role passed in the request.");
+                    resp.setError("Undefined role passed in the request");
+            }
+        } catch (RequestValidationException e){
+            log.error("getPersonalDetail | RequestValidationException occurred: "+e.getMessage());
+            resp.setError(e.getMessage());
+        } catch(NoSuchAccountException e){
+            log.error("getPersonalDetail | NoSuchAccountException occurred: "+e.getMessage());
+            resp.setError(e.getMessage());
+        } catch(Exception e){
+            log.error("getPersonalDetail | Exception occurred: "+e.getMessage());
+            resp.setError(e.getMessage());
         }
-
         return resp;
     }
 
@@ -107,7 +131,9 @@ public class CommonService {
         obj.setBlood(receptionist.getBloodGroup());
         obj.setGender(receptionist.getGender());
         obj.setPhone(receptionist.getPhoneNumber());
-        obj.setProfileImage(fileService.loadUserImage(receptionist.getProfileImage()));
+        if(receptionist.getProfileImage() != null && !receptionist.getProfileImage().isBlank()){
+            obj.setProfileImage(fileService.loadUserImage(receptionist.getProfileImage()));
+        }
         return obj;
     }
 
@@ -121,7 +147,9 @@ public class CommonService {
         obj.setBlood(pharma.getBloodGroup());
         obj.setGender(pharma.getGender());
         obj.setPhone(pharma.getPhoneNumber());
-        obj.setProfileImage(fileService.loadUserImage(pharma.getProfileImage()));
+        if(pharma.getProfileImage() != null && !pharma.getProfileImage().isBlank()) {
+            obj.setProfileImage(fileService.loadUserImage(pharma.getProfileImage()));
+        }
         return obj;
     }
 
@@ -138,7 +166,10 @@ public class CommonService {
         obj.setExperience(doctor.getExperience());
         obj.setSpecialization(doctor.getSpecialization());
         obj.setPhone(doctor.getPhoneNumber());
-        obj.setProfileImage(fileService.loadUserImage(doctor.getProfileImage()));
+        obj.setHead(doctor.isHead());
+        if(doctor.getProfileImage() != null && !doctor.getProfileImage().isBlank()) {
+            obj.setProfileImage(fileService.loadUserImage(doctor.getProfileImage()));
+        }
         return obj;
     }
 
@@ -154,7 +185,9 @@ public class CommonService {
         obj.setHead(nurse.isHead());
         obj.setSpecialization(nurse.getSpecialization());
         obj.setPhone(nurse.getPhoneNumber());
-        obj.setProfileImage(fileService.loadUserImage(nurse.getProfileImage()));
+        if(nurse.getProfileImage() != null && !nurse.getProfileImage().isBlank()) {
+            obj.setProfileImage(fileService.loadUserImage(nurse.getProfileImage()));
+        }
         return obj;
     }
 
@@ -168,7 +201,9 @@ public class CommonService {
         obj.setBirthDate(admin.getBirthDate().toString());
         obj.setBlood(admin.getBloodGroup());
         obj.setPhone(admin.getPhoneNumber());
-        obj.setProfileImage(fileService.loadUserImage(admin.getProfileImage()));
+        if(admin.getProfileImage() != null || !admin.getProfileImage().isBlank()){
+            obj.setProfileImage(fileService.loadUserImage(admin.getProfileImage()));
+        }
         return obj;
     }
 
@@ -179,7 +214,7 @@ public class CommonService {
         try{
             if(email==null || email.isEmpty() || role==null || role.isEmpty()){
                 msg = "Please pass valid email/role.";
-                throw new AuthenticationException("Empty value receives in request");
+                throw new AuthenticationException("Empty value received in request");
             }
             role = role.toUpperCase();
             if(!"DOCTOR".equals(role) && !"NURSE".equals(role)){

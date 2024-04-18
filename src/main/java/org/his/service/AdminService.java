@@ -313,7 +313,7 @@ public class AdminService {
         }
     }
 
-    public GeneralResp addNewUser(String payload, MultipartFile file) {
+    public GeneralResp addNewUser(String payload, MultipartFile file, String userId) {
         GeneralResp resp = new GeneralResp();
         NewUserRequest request = null;
         String profileImage = null;
@@ -323,6 +323,8 @@ public class AdminService {
                 throw new Exception("Pass valid profile-image");
             }
             request = objectMapper.readValue(payload, NewUserRequest.class);
+
+            validateAdminId(userId);
 
             //Validate request, by checking mandatory field value
             validateNewUserRequest(request);
@@ -486,12 +488,15 @@ public class AdminService {
 
     }
 
-    public ViewUserResponse getUsers(String role) {
+    public ViewUserResponse getUsers(String userId, String role) {
         ViewUserResponse resp = new ViewUserResponse();
         List<PersonalDetail> ls = null;
         List<ViewUserIdentifier> identifiers;
         RoleBasedMapping mapping = null;
         try{
+
+            validateAdminId(userId);
+
             if(role == null || role.isEmpty()){
                 //Fetch all the active-role users
                 identifiers = loginRepo.getActiveUsers();
@@ -537,6 +542,7 @@ public class AdminService {
                 detail.setBlood(doc.getBloodGroup());
                 detail.setAddress(doc.getAddress());
                 detail.setActive(true);
+                detail.setHead(doc.isHead());
                 detail.setBirthDate(doc.getBirthDate().toString());
                 doctor.add(detail);
             }
@@ -554,6 +560,7 @@ public class AdminService {
                 detail.setBlood(n.getBloodGroup());
                 detail.setAddress(n.getAddress());
                 detail.setActive(true);
+                detail.setHead(n.isHead());
                 detail.setBirthDate(n.getBirthDate().toString());
                 nurse.add(detail);
             }
@@ -622,7 +629,7 @@ public class AdminService {
                 detail.setRole("PHARMACIST");
                 pharmacists.put(view.getUserId(),detail);
             } else {
-
+                //Just for other invalid roles from login table
             }
         }
         mapping.setDoctors(doctors);
@@ -635,4 +642,51 @@ public class AdminService {
     public String tryImage() {
         return fileService.loadUserImage("ff237a5b4fd14871712229626350.png");
     }
+
+    public DashboardResponse getHome(String userId) {
+        DashboardResponse resp = new DashboardResponse();
+        try{
+            validateAdminId(userId);
+
+            Optional<Admin> optAdmin = adminRepo.findById(userId);
+            if (optAdmin.isEmpty()) {
+                throw new Exception("userId not found in the admin table");
+            } else {
+                PersonalDetail detail = getDetailForAdmin(optAdmin.get());
+                resp.setDetail(detail);
+            }
+            List<RoleCount> ls = loginRepo.countActiveUserByRole();
+            //resp.setResponse(ls);
+            Map<String, Long> m = new HashMap<>();
+            for(RoleCount rc : ls){
+                m.put(rc.getRole(), rc.getCount());
+            }
+            resp.setCount(m);
+
+        } catch(AuthenticationException e){
+            log.error("getHome | NoSuchAccountException occurred: "+e.getMessage());
+            resp.setError(e.getMessage());
+        } catch(Exception e){
+            log.error("getHome | Exception occurred: "+e.getMessage());
+            resp.setError(e.getMessage());
+        }
+        return resp;
+    }
+
+    private PersonalDetail getDetailForAdmin(Admin admin) {
+        PersonalDetail obj = new PersonalDetail();
+        obj.setRole("ADMIN");
+        obj.setFirstName(admin.getFirstName());
+        obj.setLastName(admin.getLastName());
+        obj.setGender(admin.getGender());
+        obj.setAddress(admin.getAddress());
+        obj.setBirthDate(admin.getBirthDate().toString());
+        obj.setBlood(admin.getBloodGroup());
+        obj.setPhone(admin.getPhoneNumber());
+        if(admin.getProfileImage() != null && !admin.getProfileImage().isBlank()){
+//            obj.setProfileImage(fileService.loadUserImage(admin.getProfileImage()));
+        }
+        return obj;
+    }
+
 }
