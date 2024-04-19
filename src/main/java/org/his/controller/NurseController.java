@@ -29,11 +29,8 @@ public class NurseController {
     }
 
     @GetMapping("/nurse/onShiftNurse")
-    public ResponseEntity<ReceptionDetailResp> onShiftNurse(
-            @RequestParam("role") String role,
-            @RequestParam("id") String id
-    ) {
-        ReceptionDetailResp resp = nurseService.getOnShiftNurses(id, role);
+    public ResponseEntity<ReceptionDetailResp> onShiftNurse(@RequestParam("userId") String userId) {
+        ReceptionDetailResp resp = nurseService.getOnShiftNurses(userId);
         if(resp.getError() == null){
             return ResponseEntity.status(HttpStatus.OK).body(resp);
         }else{
@@ -42,11 +39,8 @@ public class NurseController {
     }
 
     @GetMapping("/nurse/getWard")
-    public ResponseEntity<WardResponse> getWardDetails(
-            @RequestParam("role") String role,
-            @RequestParam("id") String id
-    ) {
-        WardResponse resp = nurseService.getWardDetails(id, role);
+    public ResponseEntity<WardResponse> getWardDetails(@RequestParam("userId") String userId) {
+        WardResponse resp = nurseService.getWardDetails(userId);
         if(resp.getError() == null){
             return ResponseEntity.status(HttpStatus.OK).body(resp);
         }else{
@@ -54,11 +48,8 @@ public class NurseController {
         }
     }
 
-    @PostMapping("/nurse/updateWard/{nurseId}")
-    public ResponseEntity<GeneralResp> updateWard (
-            @PathVariable("nurseId") String nurseId,
-            @RequestBody PatientDetail patientDetail
-    ) {
+    @PostMapping("/nurse/updateWard")
+    public ResponseEntity<GeneralResp> updateWard (@RequestParam("nurseId") String nurseId, @RequestBody PatientDetail patientDetail) {
         GeneralResp resp = nurseService.updateWard(patientDetail, nurseId);
         if(resp.getError() == null){
             return ResponseEntity.status(HttpStatus.OK).body(resp);

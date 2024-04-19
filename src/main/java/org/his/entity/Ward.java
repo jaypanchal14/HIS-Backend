@@ -17,7 +17,7 @@ public class Ward {
     private String wardId;
     private String wardNo;
     private String wardType;
-    private boolean empty;
+    private boolean isEmpty;
     private String patientId;
     private String firstName;
     private String lastName;

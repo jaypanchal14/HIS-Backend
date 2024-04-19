@@ -1,4 +1,5 @@
 package org.his.service;
+
 import lombok.extern.slf4j.Slf4j;
 import org.his.bean.*;
 import org.his.entity.Ward;
@@ -8,6 +9,7 @@ import org.his.entity.user.Patient;
 import org.his.exception.NoSuchAccountException;
 import org.his.exception.RequestValidationException;
 import org.his.repo.AdmitRepo;
+import org.his.repo.LoginRepo;
 import org.his.repo.WardHistoryRepo;
 import org.his.repo.WardRepo;
 import org.his.repo.user.NurseRepo;
@@ -29,6 +31,9 @@ import java.util.Optional;
 public class NurseService {
 
     @Autowired
+    private LoginRepo loginRepo;
+
+    @Autowired
     private NurseRepo nurseRepo;
 
     @Autowired
@@ -42,193 +47,210 @@ public class NurseService {
 
     @Autowired
     private AdmitRepo admitRepo;
+
     @Autowired
     private WardHistoryRepo wardHistoryRepo;
 
-    public ReceptionDetailResp getOnShiftNurses(String id, String role) {
+    public ReceptionDetailResp getOnShiftNurses(String userId) {
+        log.info("getOnShiftNurses | request received to view on-shift nurses.");
         ReceptionDetailResp response = new ReceptionDetailResp();
-
-        if (!role.equals("NURSE")) {
-            response.setError("Nurse doesn't have privilege to see or any other reason");
-            return response;
-        }
-        Nurse nur = nurseRepo.findById(id).orElse(null);
-        System.out.println(nur.isHead());
-        if (!nur.isHead()) {
-            response.setError("Nurse doesn't have privilege to see or any other reason");
-            return response;
-        }
-        List<Nurse> nurses = new ArrayList<>();
-        // Check if the nurse is head nurse
-        Nurse headNurse = nurseRepo.findById(id).orElse(null);
-        if (headNurse != null && headNurse.isHead()) {
-            nurses.addAll(nurseRepo.findAll());
-        }
-
-        if (nurses.isEmpty()) {
-            response.setError("No nurses available.");
-            return response;
-        }
-
-        // Create a list to store nurse details
-        List<PersonalDetail> nurseDetails = new ArrayList<>();
-
-        // Iterate through the list of nurses and map their details
-        for (Nurse nurse : nurses) {
-            if (!nurse.isHead()) {
-                PersonalDetail detail = new PersonalDetail();
-                detail.setFirstName(nurse.getFirstName());
-                detail.setLastName(nurse.getLastName());
-                //Removing email from the nurse table
-                //detail.setEmail(nurse.getEmail());
-                detail.setPhone(nurse.getPhoneNumber());
-                detail.setGender(nurse.getGender());
-                detail.setSpecialization(nurse.getSpecialization());
-                detail.setBlood(nurse.getBloodGroup());
-                detail.setAddress(nurse.getAddress());
-                detail.setBirthDate(nurse.getBirthDate().toString());
-                detail.setProfileImage(nurse.getProfileImage());
-                detail.setHead(nurse.isHead());
-                System.out.println(nurse.isHead());
-
-                // Add the nurse detail to the list
-                nurseDetails.add(detail);
-            }
-        }
-
-        // Set the list of nurse details in the response
-        response.setResponse(nurseDetails);
-
-        return response;
-    }
-
-
-    public WardResponse getWardDetails(String id, String role) {
-        WardResponse response = new WardResponse();
-        if (!isValidNurse(id)) {
-            response.setError("Invalid nurse credentials or unauthorized access.");
-            return response;
-        }
-        // Check if the nurse is authorized to view ward details
-        if (!role.equals("NURSE")) {
-            response.setError("Nurse role required to view ward details.");
-            return response;
-        }
-
-//         Retrieve ward details based on whether the ward is empty or not
-        List<Ward> wards = new ArrayList<>();
-        if (role.equals("NURSE") && !id.isEmpty()) {
-            wards.addAll(wardRepo.findAll());
-        } else {
-            wards = wardRepo.findAll();
-        }
-
-        // Populate response based on the retrieved ward details
-        List<WardDetail> wardDetails = new ArrayList<>();
-        for (Ward ward : wards) {
-            WardDetail detail = new WardDetail();
-            detail.setWardNo(ward.getWardNo());
-            detail.setType(ward.getWardType());
-            detail.setDate(Utility.getFormattedOffsetTime(ward.getDate()));
-            detail.setEmpty(ward.isEmpty());
-            detail.setPatientId(ward.getPatientId());
-            detail.setFirstName(ward.getFirstName());
-            detail.setLastName(ward.getLastName());
-            wardDetails.add(detail);
-        }
-
-        // Set the ward details in the response
-        response.setResponse(wardDetails);
-        return response;
-    }
-
-        private boolean isValidNurse(String nurseId) {
-            Nurse nurse = nurseRepo.findById(nurseId).orElse(null);
-            if(nurse == null) {
-                return false;  // Nurse ID not found
-            }
-            return true;
-        }
-
-
-
-    public GeneralResp updateWard(PatientDetail patientDetail, String nurseId) {
-        GeneralResp response = new GeneralResp();
-
-        Nurse nur=nurseRepo.findById(nurseId).orElse(null);
-           if(nur==null)
-           {
-               response.setError("No access for nurse");
-               return response;
-           }
-        // Check if patientId, wardNo, type, and action are present
-        if (patientDetail == null || patientDetail.getAadhaar() == null ||
-                patientDetail.getWardNo() == null ||
-                patientDetail.getAction() == null) {
-            response.setError("All required fields must be provided.");
-            return response;
-        }
-
-        if (!patientDetail.getAction().equalsIgnoreCase("A") &&
-                !patientDetail.getAction().equalsIgnoreCase("D")) {
-            response.setError("Invalid action. Action must be 'A' for allotment or 'D' for discharge.");
-            return response;
-        }
-
-        Optional<Ward> wardOptional = wardRepo.findByWardNo(patientDetail.getWardNo());
-        if (wardOptional.isEmpty()) {
-            response.setError("Ward not found.");
-            return response;
-        }
-        Ward ward = wardOptional.get();
-
-        Optional<Patient> optP = patientRepo.findById(patientDetail.getAadhaar());
-        if(optP.isEmpty()){
-            response.setError("No such patient found.");
-            return response;
-        }
-        Patient p = optP.get();
-
-        if (patientDetail.getAction().equalsIgnoreCase("A")) {
-            ward.setPatientId(patientDetail.getAadhaar());
-            ward.setFirstName(p.getFirstName());
-            ward.setLastName(p.getLastName());
-            ward.setEmpty(false);
-
-            //Add the entry of wardNo in Patient Entity
-            Optional<Patient> pd = patientRepo.findById(ward.getPatientId());
-            Patient patient=pd.get();
-            patient.setWardNo(ward.getWardNo());
-            patient.setPatientType("IP");
-
-        } else {
-            if (ward.getPatientId() == null || !ward.getPatientId().equals(patientDetail.getAadhaar())) {
-                response.setError("Patient is not allocated to this ward.");
+        try {
+            Nurse nur = nurseRepo.findById(userId).orElse(null);
+            if (nur == null || !nur.isHead()) {
+                response.setError("Nurse is not found in the table or doesn't have the privilege to see.");
                 return response;
             }
 
-            //Remove the entry of wardNo in Patient Entity
-            Optional<Patient> pd = patientRepo.findById(ward.getPatientId());
-            Patient patient=pd.get();
-            patient.setWardNo(null);
-            patient.setPatientType("OP");
+            List<ViewUserIdentifier> identifiers = loginRepo.getActiveUsersBasedOnRole("NURSE");
+            List<String> nurseIds = new ArrayList<>();
+            for (ViewUserIdentifier identifier : identifiers) {
+                if (identifier.getUserId().equals(userId)) {
+                    continue;
+                }
+                nurseIds.add(identifier.getUserId());
+            }
+            List<Nurse> nurses = nurseRepo.findAllByIdIn(nurseIds);
 
-            //make the entry in ward history
-            WardHistory wardHistory=new WardHistory();
-            wardHistory.setHistoryId(Utility.getUniqueId());
-            wardHistory.setWardNo(ward.getWardNo());
-            wardHistory.setPatientId(ward.getPatientId());
-            wardHistory.setDate(OffsetDateTime.now());
-            wardHistoryRepo.save(wardHistory);
+            List<PersonalDetail> nurseDetails = new ArrayList<>();
 
-            ward.setPatientId(null);
-            ward.setFirstName(null);
-            ward.setLastName(null);
-            ward.setEmpty(true);
+            if (nurses == null || nurses.isEmpty()) {
+                response.setResponse(nurseDetails);
+                return response;
+            }
+
+            LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
+            int hour = now.getHour();
+            int currentDayOfWeek = now.getDayOfWeek().getValue();
+            // Iterate through the list of nurses and map their details
+            for (Nurse nurse : nurses) {
+                if (ShiftUtility.isNurseOnShift(nurse, hour, currentDayOfWeek)) {
+                    PersonalDetail detail = new PersonalDetail();
+                    detail.setFirstName(nurse.getFirstName());
+                    detail.setLastName(nurse.getLastName());
+                    detail.setPhone(nurse.getPhoneNumber());
+                    detail.setGender(nurse.getGender());
+                    detail.setSpecialization(nurse.getSpecialization());
+                    detail.setBlood(nurse.getBloodGroup());
+                    detail.setAddress(nurse.getAddress());
+                    detail.setBirthDate(nurse.getBirthDate().toString());
+                    detail.setProfileImage(nurse.getProfileImage());
+                    detail.setHead(nurse.isHead());
+
+                    // Add the nurse detail to the list
+                    nurseDetails.add(detail);
+                }
+            }
+
+            response.setResponse(nurseDetails);
+        } catch (Exception e) {
+            log.error("getOnShiftNurses | Exception occurred: " + e.getMessage());
+            response.setError(e.getMessage());
         }
-        wardRepo.save(ward);
+        return response;
+    }
 
-        response.setResponse("SUCCESS");
+
+    public WardResponse getWardDetails(String userId) {
+        log.info("getWardDetails | request received to view ward-details.");
+        WardResponse response = new WardResponse();
+        List<WardDetail> wardDetails = new ArrayList<>();
+
+        try {
+            if (userId == null || userId.isBlank()) {
+                throw new RequestValidationException("Empty userId passed in the request");
+            }
+
+            Nurse nurse = nurseRepo.findById(userId).orElse(null);
+            if (nurse == null) {
+                response.setError("Nurse not found in the nurse table");
+                return response;
+            }
+
+            LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
+            int hour = now.getHour();
+            int currentDayOfWeek = now.getDayOfWeek().getValue();
+            if (nurse.isHead() || ShiftUtility.isNurseOnShift(nurse, hour, currentDayOfWeek)) {
+
+                List<Ward> wards = wardRepo.findAll();
+
+                // Populate response based on the retrieved ward details
+                for (Ward ward : wards) {
+                    WardDetail detail = new WardDetail();
+                    detail.setWardNo(ward.getWardNo());
+                    detail.setType(ward.getWardType());
+                    detail.setDate(Utility.getFormattedOffsetTime(ward.getDate()));
+                    detail.setEmpty(ward.isEmpty());
+                    detail.setPatientId(ward.getPatientId());
+                    detail.setFirstName(ward.getFirstName());
+                    detail.setLastName(ward.getLastName());
+                    wardDetails.add(detail);
+                }
+
+                // Set the ward details in the response
+                response.setResponse(wardDetails);
+
+            } else {
+                log.info("getWardDetails | Unauthorized access by NURSE or NURSE is not on the shift.");
+                response.setResponse(wardDetails);
+                return response;
+            }
+
+        } catch (Exception e) {
+            log.error("getWardDetails | Exception occurred: " + e.getMessage());
+            response.setError(e.getMessage());
+        }
+        return response;
+    }
+
+    public GeneralResp updateWard(PatientDetail patientDetail, String userId) {
+        log.info("updateWard | request received to update ward-detail");
+        GeneralResp response = new GeneralResp();
+        try {
+            if (userId == null || userId.isBlank()) {
+                throw new RequestValidationException("Empty userId passed in the request");
+            }
+
+            Nurse nur = nurseRepo.findById(userId).orElse(null);
+            if (nur == null) {
+                response.setError("Nurse not found in the table");
+                return response;
+            }
+            // Check if patientId, wardNo, type, and action are present
+            if (patientDetail == null || patientDetail.getAadhaar() == null ||
+                    patientDetail.getWardNo() == null ||
+                    patientDetail.getAction() == null) {
+                throw new RequestValidationException("All required fields must be provided.");
+            }
+
+            if (!patientDetail.getAction().equalsIgnoreCase("A") &&
+                    !patientDetail.getAction().equalsIgnoreCase("D")) {
+                throw new RequestValidationException("Invalid action. Action must be 'A' for allotment or 'D' for discharge.");
+            }
+
+            Optional<Ward> wardOptional = wardRepo.findByWardNo(patientDetail.getWardNo());
+            if (wardOptional.isEmpty()) {
+                throw new RequestValidationException("Ward not found in the table");
+            }
+
+            Ward ward = wardOptional.get();
+
+            Optional<Patient> optP = patientRepo.findById(patientDetail.getAadhaar());
+            if (optP.isEmpty()) {
+                throw new RequestValidationException("No such patient found in the table");
+            }
+            Patient p = optP.get();
+
+            if ("A".equalsIgnoreCase(patientDetail.getAction())) {
+                if (!ward.isEmpty()) {
+                    throw new RequestValidationException("Ward is already allocated to the patient");
+                }
+                ward.setPatientId(patientDetail.getAadhaar());
+                ward.setFirstName(p.getFirstName());
+                ward.setLastName(p.getLastName());
+                ward.setEmpty(false);
+
+                p.setWardNo(ward.getWardNo());
+                p.setPatientType("IP");
+
+            } else {
+                if (ward.isEmpty()) {
+                    //In case the ward is already empty
+                    ward.setPatientId(null);
+                    ward.setFirstName(null);
+                    ward.setLastName(null);
+                    ward.setEmpty(true);
+                    wardRepo.save(ward);
+                    response.setResponse("SUCCESS");
+                    return response;
+                }
+                if (ward.getPatientId() == null || !ward.getPatientId().equals(patientDetail.getAadhaar())) {
+                    response.setError("Patient is not allocated to this ward.");
+                    return response;
+                }
+
+                p.setWardNo("");
+                p.setPatientType("OP");
+
+                //make the entry in ward history
+                WardHistory wardHistory = new WardHistory();
+                wardHistory.setHistoryId(Utility.getUniqueId());
+                wardHistory.setWardNo(ward.getWardNo());
+                wardHistory.setPatientId(ward.getPatientId());
+                wardHistory.setDate(OffsetDateTime.now());
+                wardHistoryRepo.save(wardHistory);
+
+                ward.setPatientId(null);
+                ward.setFirstName(null);
+                ward.setLastName(null);
+                ward.setEmpty(true);
+                wardRepo.save(ward);
+
+            }
+            response.setResponse("SUCCESS");
+        } catch (Exception e) {
+            log.error("updateWard | Exception occurred: " + e.getMessage());
+            response.setError(e.getMessage());
+        }
         return response;
     }
 
@@ -236,15 +258,15 @@ public class NurseService {
     public DashboardResponse getDashBoard(String userId) {
         DashboardResponse response = new DashboardResponse();
 //        PersonalDetail detail;
-        try{
-            if(userId == null || userId.isBlank()){
+        try {
+            if (userId == null || userId.isBlank()) {
                 throw new RequestValidationException("Empty nurseId passed in the request");
             }
 
             Optional<Nurse> optNurse = nurseRepo.findById(userId);
             if (optNurse.isEmpty()) {
                 throw new NoSuchAccountException("No such nurse found in the table");
-            }else{
+            } else {
                 PersonalDetail detail = getDetailForNurse(optNurse.get());
                 response.setDetail(detail);
 
@@ -255,11 +277,11 @@ public class NurseService {
             LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
             int hour = now.getHour();
             int currentDayOfWeek = now.getDayOfWeek().getValue();
-            if(ShiftUtility.isNurseOnShift(optNurse.get(), hour, currentDayOfWeek)){
+            if (ShiftUtility.isNurseOnShift(optNurse.get(), hour, currentDayOfWeek)) {
                 response.setOnDuty(1);
             }
 
-            if(optNurse.get().isHead() && response.getOnDuty()==1){
+            if (optNurse.get().isHead() && response.getOnDuty() == 1) {
                 //If head-nurse is on duty, display IP/OP patient count
                 int ipPatientCount = admitRepo.countAdmitByActiveIsTrueAndPatientType("IP");
                 int opPatientCount = admitRepo.countAdmitByActiveIsTrueAndPatientType("OP");
@@ -268,14 +290,14 @@ public class NurseService {
             }
 
             log.info("getDashBoard | request processed successfully.");
-        } catch (NoSuchAccountException e){
-            log.error("NoSuchAccountException | Exception occurred: "+e.getMessage());
+        } catch (NoSuchAccountException e) {
+            log.error("NoSuchAccountException | Exception occurred: " + e.getMessage());
             response.setError(e.getMessage());
-        } catch (RequestValidationException e){
-            log.error("RequestValidationException | Exception occurred: "+e.getMessage());
+        } catch (RequestValidationException e) {
+            log.error("RequestValidationException | Exception occurred: " + e.getMessage());
             response.setError(e.getMessage());
-        } catch (Exception e){
-            log.error("getDashBoard | Exception occurred: "+e.getMessage());
+        } catch (Exception e) {
+            log.error("getDashBoard | Exception occurred: " + e.getMessage());
             response.setError(e.getMessage());
         }
         return response;
