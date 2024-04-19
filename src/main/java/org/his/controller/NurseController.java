@@ -49,8 +49,8 @@ public class NurseController {
     }
 
     @PostMapping("/nurse/updateWard")
-    public ResponseEntity<GeneralResp> updateWard (@RequestParam("nurseId") String nurseId, @RequestBody PatientDetail patientDetail) {
-        GeneralResp resp = nurseService.updateWard(patientDetail, nurseId);
+    public ResponseEntity<GeneralResp> updateWard (@RequestParam("userId") String userId, @RequestBody PatientDetail patientDetail) {
+        GeneralResp resp = nurseService.updateWard(patientDetail, userId);
         if(resp.getError() == null){
             return ResponseEntity.status(HttpStatus.OK).body(resp);
         }else{
