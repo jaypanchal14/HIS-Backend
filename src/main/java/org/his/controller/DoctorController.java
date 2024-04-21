@@ -18,6 +18,7 @@ public class DoctorController {
     @Autowired
     private DoctorService doctorService;
 
+    //Not being used
     @GetMapping("/doc/viewPastPatients")
     public ResponseEntity<PatientResponse> viewPastPatients(@RequestParam(name = "userId") String userId){
         log.info("viewPastPatients | request received to view past-patients");

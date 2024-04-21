@@ -3,6 +3,7 @@ package org.his.controller;
 import lombok.extern.slf4j.Slf4j;
 import org.his.bean.DiagnosisResponse;
 import org.his.bean.GeneralResp;
+import org.his.bean.OnePatientResponse;
 import org.his.bean.PatientResponse;
 import org.his.service.PatientService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,14 +39,14 @@ public class PatientController {
     }
 
     @GetMapping("/patient/viewOneLivePatient")
-    public ResponseEntity<PatientResponse> viewOneLivePatient(
+    public ResponseEntity<?> viewOneLivePatient(
             @RequestParam(name = "role") String role,
             @RequestParam(name = "userId") String userId,
             @RequestParam(name = "admitId") String admitId
     ) {
         log.info("viewOneLivePatient | Request received for getting one live patients.");
 
-        PatientResponse resp = patientService.viewOneLivePatient(role, userId, admitId);
+        OnePatientResponse resp = patientService.viewOneLivePatient(role, userId, admitId);
         if(resp.getError() == null){
             return ResponseEntity.status(HttpStatus.OK).body(resp);
         }else{
@@ -55,13 +56,11 @@ public class PatientController {
 
     @PostMapping("/patient/addDiagnosis")
     public ResponseEntity<?> addDiagnosis(@RequestPart(name = "file", required = false) MultipartFile file,
-                                             @RequestParam(name = "request") String request,
-                                             @RequestParam(name = "role") String role,
-                                             @RequestParam(name = "userId") String userId
-
+                                          @RequestParam(name = "request") String request,
+                                          @RequestParam(name = "role") String role,
+                                          @RequestParam(name = "userId") String userId
     ) {
         log.info("addDiagnosis | request received to add new diagnosis");
-//        return ResponseEntity.status(HttpStatus.OK).body("OK");
         GeneralResp resp = patientService.addDiagnosis(request, file, role, userId);
         if(resp.getError() == null){
             return ResponseEntity.status(HttpStatus.OK).body(resp);
@@ -71,12 +70,13 @@ public class PatientController {
     }
 
     @GetMapping("/patient/getDiagnosisWithAdmitId")
-    public ResponseEntity<?> getDiagnosisWithAdmitId(@RequestParam(name = "role") String role,
-            @RequestParam(name = "admitId") String admitId, @RequestParam(name = "userId") String userId
+    public ResponseEntity<?> getDiagnosisWithAdmitId(
+            @RequestParam(name = "role") String role,
+            @RequestParam(name = "admitId") String admitId,
+            @RequestParam(name = "userId") String userId
     ) {
 
-        log.info("addDiagnosis | request received to view diagnosis of a patient");
-//        return ResponseEntity.status(HttpStatus.OK).body("OK");
+        log.info("getDiagnosisWithAdmitId | request received.");
         DiagnosisResponse resp = patientService.getDiagnosisForAdmitId(role, admitId, userId);
         if(resp.getError() == null){
             return ResponseEntity.status(HttpStatus.OK).body(resp);
@@ -85,14 +85,31 @@ public class PatientController {
         }
     }
 
-    @GetMapping("/patient/pastHistoryOnePatient")
-    public ResponseEntity<?> pastHistoryOnePatient(@RequestParam(name = "role") String role,
-                                          @RequestParam(name = "patientId") String patientId, @RequestParam(name = "userId") String userId
+    @GetMapping("/patient/pastHistory")
+    public ResponseEntity<?> pastHistory(
+            @RequestParam(name = "role") String role,
+            @RequestParam(name = "userId") String userId,
+            @RequestParam(name = "patientId", required = false) String patientId
     ) {
 
-        log.info("addDiagnosis | request received to view diagnosis of a patient");
-//        return ResponseEntity.status(HttpStatus.OK).body("OK");
-        DiagnosisResponse resp = patientService.pastHistoryOnePatient(role, patientId, userId);
+        log.info("pastHistory | request received to view past-history");
+        PatientResponse  resp = patientService.pastHistory(role, userId, patientId);
+        if(resp.getError() == null){
+            return ResponseEntity.status(HttpStatus.OK).body(resp);
+        }else{
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
+        }
+    }
+
+    @GetMapping("/patient/pastHistoryOnePatient")
+    public ResponseEntity<?> pastHistoryOnePatient(
+            @RequestParam(name = "role") String role,
+            @RequestParam(name = "patientId") String patientId,
+            @RequestParam(name = "userId") String userId
+    ) {
+
+        log.info("pastHistoryOnePatient | request received to view past-history of a patient");
+        OnePatientResponse resp = patientService.pastHistoryOnePatient(role, patientId, userId);
         if(resp.getError() == null){
             return ResponseEntity.status(HttpStatus.OK).body(resp);
         }else{

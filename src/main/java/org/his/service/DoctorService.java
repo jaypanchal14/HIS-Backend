@@ -35,6 +35,7 @@ public class DoctorService {
     @Autowired
     private AdmitRepo admitRepo;
 
+    //Not being used
     public PatientResponse viewPastPatients(String userId) {
         PatientResponse response = new PatientResponse();
 

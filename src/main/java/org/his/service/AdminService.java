@@ -8,6 +8,7 @@ import org.his.entity.Login;
 import org.his.entity.user.*;
 import org.his.exception.AuthenticationException;
 import org.his.exception.NoSuchAccountException;
+import org.his.repo.AdmitRepo;
 import org.his.repo.LoginRepo;
 import org.his.repo.user.*;
 import org.his.util.EmailService;
@@ -19,6 +20,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.nio.file.Path;
 import java.sql.Date;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.*;
 
 @Slf4j
@@ -42,6 +45,9 @@ public class AdminService {
 
     @Autowired
     private LoginRepo loginRepo;
+
+    @Autowired
+    private AdmitRepo admitRepo;
 
     //Added for transactional methods (which needs to be performed under same session
     @Autowired
@@ -646,6 +652,7 @@ public class AdminService {
     public DashboardResponse getHome(String userId) {
         DashboardResponse resp = new DashboardResponse();
         try{
+
             validateAdminId(userId);
 
             Optional<Admin> optAdmin = adminRepo.findById(userId);
@@ -662,6 +669,14 @@ public class AdminService {
                 m.put(rc.getRole(), rc.getCount());
             }
             resp.setCount(m);
+
+            int ipPatientCount = admitRepo.countAdmitByActiveIsTrueAndPatientType("IP");
+            int opPatientCount = admitRepo.countAdmitByActiveIsTrueAndPatientType("OP");
+
+            resp.setIpPatient(ipPatientCount);
+            resp.setOpPatient(opPatientCount);
+            OffsetDateTime today = OffsetDateTime.now(ZoneId.of("Asia/Kolkata")).toLocalDate().atStartOfDay().atOffset(ZoneOffset.UTC);
+            resp.setTreatedPatient(admitRepo.countAdmitByDateAfterAndActiveIsFalse(today));
 
         } catch(AuthenticationException e){
             log.error("getHome | NoSuchAccountException occurred: "+e.getMessage());

@@ -7,9 +7,10 @@ import java.util.List;
 
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class PatientResponse {
+public class OnePatientResponse {
 
-    private List<PatientDetail> response;
+    private PatientDetail detail;
+    private List<DiagnosisItem> list;
     private String error;
 
 }

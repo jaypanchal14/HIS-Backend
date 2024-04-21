@@ -12,6 +12,7 @@ public class DashboardResponse {
     private PersonalDetail detail;
 
     private Shift shift;
+
     //To display count only if doctor/nurse is on-duty. (below three fields are only for doctor and nurse)
     private int onDuty;
     private int ipPatient;
@@ -19,6 +20,9 @@ public class DashboardResponse {
 
     //Only used by admin
     private Map<String, Long> count;
+
+    //Used by admin and receptionist
+    private int treatedPatient;
 
     private String error;
 

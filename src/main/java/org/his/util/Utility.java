@@ -9,7 +9,6 @@ import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
@@ -42,10 +41,6 @@ public class Utility {
     public static String endForgotPass = "\n\n\n" +
             "Regards, \n" +
             "HIS-Admin";
-
-    public static String getFormattedTime(ZonedDateTime zdt){
-        return formatter.format(zdt);
-    }
 
     public static String getFormattedOffsetTime(OffsetDateTime odt){
         return odt.format(formatter);
