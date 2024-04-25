@@ -25,6 +25,9 @@ Steps to run :
     ```
     <br>
 
+4)Shifts are defined as : <br>
+0 : no shift, 1 : 12:00 AM to 08:59 AM, 2 : 09:00 AM to 04:59 PM, 3: 05:00PM to 11:59PM <br>
+0 : no shift, 1 : 00:00 to 08:59, 2 : 09:00 to 16:59, 3 : 17:00 to 23:59 <br>
 
 Note: <br>
 Please use below headers whenever needed : <br>

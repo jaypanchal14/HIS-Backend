@@ -24,7 +24,7 @@ public class UtilController {
     @GetMapping("/sendEmail")
     public String sendEmail(){
         log.info("Request received for sending email");
-        if(emailService.sendEmail("sample email", "brijesh.prajapati@iiitb.ac.in")){
+        if(emailService.sendEmail("sample email", "brijesh.prajapati@iiitb.ac.in", false)){
             return "SENT";
         }else{
             return "FAILED";

@@ -1,6 +1,7 @@
 package org.his.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.his.bean.GeneralResp;
 import org.his.bean.PersonalDetail;
 import org.his.bean.PersonalDetailResp;
 import org.his.bean.ScheduleDetailResp;
@@ -46,6 +47,20 @@ public class CommonController {
     public ResponseEntity<?> getScheduleDetails(@RequestParam(name="email") String email, @RequestParam(name="role") String role){
         log.info("getScheduleDetails | Request received for getting schedule details.");
         ScheduleDetailResp resp = service.getScheduleDetail(email, role);
+        if(resp.getError() == null){
+            return ResponseEntity.status(HttpStatus.OK).body(resp);
+        }else{
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
+        }
+    }
+
+    @PostMapping("/helpEmail")
+    public ResponseEntity<?> sendHelpEmail(
+            @RequestParam(name = "userId")String userId,
+            @RequestParam(name="role") String role,
+            @RequestBody GeneralResp request){
+        log.info("sendHelpEmail | Request received for sending email to admin");
+        GeneralResp resp = service.sendHelpEmail(userId, role, request);
         if(resp.getError() == null){
             return ResponseEntity.status(HttpStatus.OK).body(resp);
         }else{

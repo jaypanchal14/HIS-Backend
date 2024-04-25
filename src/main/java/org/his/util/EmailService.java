@@ -19,7 +19,7 @@ public class EmailService {
     @Value("${spring.mail.username}")
     private String sender;
 
-    public boolean sendEmail(String msg, String emailTo){
+    public boolean sendEmail(String msg, String emailTo, boolean isHTML){
         try {
             MimeMessage mimeMsg = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMsg);
@@ -27,9 +27,10 @@ public class EmailService {
             //helper.addTo("jay.panchal@iiitb.ac.in");
             helper.addTo(emailTo);
             helper.setSubject("Mail from HIS-Application");
-            helper.setText(msg+", so jao, bahot padh liya.");
+            helper.setText(msg, isHTML);
+
             mailSender.send(mimeMsg);
-            log.info("Mail sent");
+//            log.info("Mail sent");
         }catch (Exception e){
             log.error("Exception occurred with msg:"+e.getMessage());
             return false;

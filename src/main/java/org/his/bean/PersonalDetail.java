@@ -24,6 +24,15 @@ public class PersonalDetail {
     private int experience;
     private String address;
 
+    //For doctor and nurse
+    private int mon;
+    private int tue;
+    private int wed;
+    private int thu;
+    private int fri;
+    private int sat;
+    private int sun;
+
     //This would be in Base64 encoded string
     private String profileImage;
 

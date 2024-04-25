@@ -9,6 +9,7 @@ import org.his.exception.NoSuchAccountException;
 import org.his.exception.RequestValidationException;
 import org.his.repo.LoginRepo;
 import org.his.repo.user.*;
+import org.his.util.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -38,6 +39,9 @@ public class CommonService {
 
     @Autowired
     private FilesStorageService fileService;
+
+    @Autowired
+    private EmailService emailService;
 
     public PersonalDetailResp getPersonalDetail(String id, String role){
         PersonalDetailResp resp = new PersonalDetailResp();
@@ -201,7 +205,7 @@ public class CommonService {
         obj.setBirthDate(admin.getBirthDate().toString());
         obj.setBlood(admin.getBloodGroup());
         obj.setPhone(admin.getPhoneNumber());
-        if(admin.getProfileImage() != null || !admin.getProfileImage().isBlank()){
+        if(admin.getProfileImage() != null && !admin.getProfileImage().isBlank()){
             obj.setProfileImage(fileService.loadUserImage(admin.getProfileImage()));
         }
         return obj;
@@ -446,4 +450,51 @@ public class CommonService {
         return receptionist;
     }
 
+    public GeneralResp sendHelpEmail(String userId, String role, GeneralResp request) {
+        GeneralResp resp = new GeneralResp();
+        try{
+            if(userId == null || userId.isBlank() || role==null || role.isBlank()){
+                throw new RequestValidationException("Empty userId/role passed in the request");
+            }
+
+            if(request == null || request.getResponse()==null || request.getResponse().isBlank()){
+                throw new RequestValidationException("Empty message passed in the request-body");
+            }
+            role = role.toUpperCase();
+
+            Optional<Login> l = loginRepo.findAccountByUserId(userId, role);
+            if(l.isEmpty()){
+                throw new NoSuchAccountException("Invalid userId passed in the request");
+            }
+            String userName = l.get().getUsername();
+
+            l = loginRepo.findFirstByIsActiveIsTrueAndRole("ADMIN");
+            if(l.isEmpty()){
+                throw new NoSuchAccountException("No active admin found in the database");
+            }
+
+            log.info("sendHelpEmail | Sending an email to admin:"+l.get().getUserId());
+            String msg = "Hello ADMIN,<br><br>" +
+                         "A user with username: "+userName+", has raised a below query: <br><b>"+request.getResponse()+
+                         "</b><br>" +
+                         "Please help to clarify.<br><br>" +
+                         "Regards,<br>" +
+                         "HIS-System";
+            emailService.sendEmail(msg, l.get().getUsername(), true);
+
+            resp.setResponse("SUCCESS");
+            log.info("sendHelpEmail | email sent to admin with the user's query");
+        } catch (NoSuchAccountException e){
+            log.error("sendHelpEmail | NoSuchAccountException | Exception occurred: "+e.getMessage());
+            resp.setError(e.getMessage());
+        } catch (RequestValidationException e){
+            log.error("sendHelpEmail | RequestValidationException | Exception occurred: "+e.getMessage());
+            resp.setError(e.getMessage());
+        } catch (Exception e){
+            log.error("sendHelpEmail | Exception occurred: "+e.getMessage());
+            resp.setError(e.getMessage());
+        }
+        return resp;
+
+    }
 }

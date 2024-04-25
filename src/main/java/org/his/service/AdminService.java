@@ -178,6 +178,13 @@ public class AdminService {
                         detail.setEmail(request.getEmail());
                         detail.setActive(account.isActive());
                         detail.setUserId(account.getUserId());
+                        detail.setMon(n.getMon());
+                        detail.setTue(n.getTue());
+                        detail.setWed(n.getWed());
+                        detail.setThu(n.getThu());
+                        detail.setFri(n.getFri());
+                        detail.setSat(n.getSat());
+                        detail.setSun(n.getSun());
                         resp.setResponse(detail);
                     }
                     break;
@@ -194,6 +201,13 @@ public class AdminService {
                         detail.setEmail(request.getEmail());
                         detail.setUserId(account.getUserId());
                         detail.setActive(account.isActive());
+                        detail.setMon(d.getMon());
+                        detail.setTue(d.getTue());
+                        detail.setWed(d.getWed());
+                        detail.setThu(d.getThu());
+                        detail.setFri(d.getFri());
+                        detail.setSat(d.getSat());
+                        detail.setSun(d.getSun());
                         resp.setResponse(detail);
                     }
                     break;

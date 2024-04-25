@@ -636,13 +636,32 @@ public class PatientService {
             }
 
             if(patientId != null && !patientId.isBlank()){
-                Patient patient = patientRepo.findById(patientId).orElse(null);
-                if(patient == null){
-                    log.info("pastHistory | patientId not found in the database");
-                    resp.setResponse(patientList);
-                    return resp;
+                if(isHead) {
+                    Patient patient = patientRepo.findById(patientId).orElse(null);
+                    if(patient == null){
+                        log.info("pastHistory | patientId not found in the database");
+                        resp.setResponse(patientList);
+                        return resp;
+                    }
+                    patients.add(patient);
+                }else{
+                    List<String> admitIds = diagnosisRepo.findDistinctAdmitIdByUserId("DOCTOR", userId);
+                    List<String> pListFromAdmit = admitRepo.findDistinctPatientIdByAdmitId(admitIds);
+
+                    if(pListFromAdmit.stream().noneMatch(item -> item.equals(patientId))){
+                        log.info("pastHistory | doctor has not treated this patient");
+                        resp.setResponse(patientList);
+                        return resp;
+                    }
+                    Patient patient = patientRepo.findById(patientId).orElse(null);
+                    if(patient == null){
+                        log.info("pastHistory | patientId not found in the database");
+                        resp.setResponse(patientList);
+                        return resp;
+                    }
+                    patients.add(patient);
                 }
-                patients.add(patient);
+
             }else{
                 if(isHead){
                     //Fetch all the patients details
