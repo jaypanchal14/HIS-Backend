@@ -2,6 +2,7 @@ package org.his.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.his.bean.*;
+import org.his.entity.Admit;
 import org.his.entity.Ward;
 import org.his.entity.WardHistory;
 import org.his.entity.user.Nurse;
@@ -132,17 +133,19 @@ public class NurseService {
             if (nurse.isHead() || ShiftUtility.isNurseOnShift(nurse, hour, currentDayOfWeek)) {
 
                 List<Ward> wards = wardRepo.findAll();
-
+                WardDetail detail;
                 // Populate response based on the retrieved ward details
                 for (Ward ward : wards) {
-                    WardDetail detail = new WardDetail();
-                    detail.setWardNo(ward.getWardNo());
-                    detail.setType(ward.getWardType());
-                    detail.setDate(Utility.getFormattedOffsetTime(ward.getDate()));
-                    detail.setEmpty(ward.isEmpty());
+                    detail = new WardDetail();
                     detail.setPatientId(ward.getPatientId());
                     detail.setFirstName(ward.getFirstName());
                     detail.setLastName(ward.getLastName());
+                    detail.setEmpty(ward.isEmpty());
+                    detail.setWardNo(ward.getWardNo());
+                    detail.setType(ward.getWardType());
+                    detail.setDate(Utility.getFormattedOffsetTime(ward.getDate()));
+
+                    log.info("Ward: "+detail);
                     wardDetails.add(detail);
                 }
 
@@ -151,10 +154,13 @@ public class NurseService {
 
             } else {
                 log.info("getWardDetails | Unauthorized access by NURSE or NURSE is not on the shift.");
-                response.setResponse(wardDetails);
-                return response;
             }
+            response.setResponse(wardDetails);
 
+
+        } catch (RequestValidationException e) {
+            log.error("getWardDetails | RequestValidationException occurred: " + e.getMessage());
+            response.setError(e.getMessage());
         } catch (Exception e) {
             log.error("getWardDetails | Exception occurred: " + e.getMessage());
             response.setError(e.getMessage());
@@ -162,91 +168,146 @@ public class NurseService {
         return response;
     }
 
-    public GeneralResp updateWard(PatientDetail patientDetail, String userId) {
+    public GeneralResp updateWard(PatientDetail request, String userId) {
         log.info("updateWard | request received to update ward-detail");
         GeneralResp response = new GeneralResp();
+        OffsetDateTime time = OffsetDateTime.now();
         try {
             if (userId == null || userId.isBlank()) {
                 throw new RequestValidationException("Empty userId passed in the request");
             }
 
-            Nurse nur = nurseRepo.findById(userId).orElse(null);
-            if (nur == null) {
-                response.setError("Nurse not found in the table");
-                return response;
-            }
             // Check if patientId, wardNo, type, and action are present
-            if (patientDetail == null || patientDetail.getAadhaar() == null ||
-                    patientDetail.getWardNo() == null ||
-                    patientDetail.getAction() == null) {
+            if (request == null || request.getAadhaar() == null || request.getAadhaar().isBlank() ||
+                    request.getWardNo() == null || request.getWardNo().isBlank() ||
+                    request.getAction() == null || request.getAction().isBlank()) {
                 throw new RequestValidationException("All required fields must be provided.");
             }
 
-            if (!patientDetail.getAction().equalsIgnoreCase("A") &&
-                    !patientDetail.getAction().equalsIgnoreCase("D")) {
-                throw new RequestValidationException("Invalid action. Action must be 'A' for allotment or 'D' for discharge.");
+            request.setAction(request.getAction().toUpperCase());
+
+            if (!request.getAction().equals("A") &&
+                    !request.getAction().equals("D")) {
+                throw new RequestValidationException("Invalid action, action must be 'A' for allotment or 'D' for discharge.");
             }
 
-            Optional<Ward> wardOptional = wardRepo.findByWardNo(patientDetail.getWardNo());
-            if (wardOptional.isEmpty()) {
-                throw new RequestValidationException("Ward not found in the table");
+            Nurse nur = nurseRepo.findById(userId).orElse(null);
+            if (nur == null) {
+                throw new RequestValidationException("Nurse not found in the table");
             }
 
-            Ward ward = wardOptional.get();
+            LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
+            int hour = now.getHour();
+            int currentDayOfWeek = now.getDayOfWeek().getValue();
+            if (nur.isHead() || ShiftUtility.isNurseOnShift(nur, hour, currentDayOfWeek)) {
 
-            Optional<Patient> optP = patientRepo.findById(patientDetail.getAadhaar());
-            if (optP.isEmpty()) {
-                throw new RequestValidationException("No such patient found in the table");
-            }
-            Patient p = optP.get();
-
-            if ("A".equalsIgnoreCase(patientDetail.getAction())) {
-                if (!ward.isEmpty()) {
-                    throw new RequestValidationException("Ward is already allocated to the patient");
+                Optional<Ward> wardOptional = wardRepo.findByWardNo(request.getWardNo());
+                if (wardOptional.isEmpty()) {
+                    throw new RequestValidationException("WardNo not found in the table");
                 }
-                ward.setPatientId(patientDetail.getAadhaar());
-                ward.setFirstName(p.getFirstName());
-                ward.setLastName(p.getLastName());
-                ward.setEmpty(false);
+                Ward ward = wardOptional.get();
+                //In case of admit
+                if ("A".equals(request.getAction())) {
 
-                p.setWardNo(ward.getWardNo());
-                p.setPatientType("IP");
+                    if (!ward.isEmpty()) {
+                        throw new RequestValidationException("Ward is already allocated to a patient");
+                    }
+
+                    Optional<Patient> optP = patientRepo.findById(request.getAadhaar());
+                    if (optP.isEmpty()) {
+                        throw new RequestValidationException("No such patient found in the patient-table");
+                    }
+
+                    Optional<Admit> optionalAdmit = admitRepo.findByPatientIdAndActive(request.getAadhaar(), true);
+                    if (optionalAdmit.isEmpty()) {
+                        throw new RequestValidationException("patient not found in the admit-table");
+                    }
+
+                    Admit admit = optionalAdmit.get();
+                    admit.setPatientType("IP");
+                    admit.setDate(time);
+
+                    wardOptional = wardRepo.findByPatientId(request.getAadhaar());
+                    if(wardOptional.isPresent()){
+                        //If the patient is already attached to one wardID
+                        Ward oldRow = wardOptional.get();
+
+                        WardHistory wardHistory = new WardHistory();
+                        wardHistory.setHistoryId(Utility.getUniqueId());
+                        wardHistory.setWardNo(oldRow.getWardNo());
+                        wardHistory.setPatientId(oldRow.getPatientId());
+                        wardHistory.setDate(OffsetDateTime.now());
+                        wardHistoryRepo.save(wardHistory);
+
+                        oldRow.setPatientId(null);
+                        oldRow.setFirstName(null);
+                        oldRow.setLastName(null);
+                        oldRow.setEmpty(true);
+                        oldRow.setDate(time);
+                        wardRepo.save(oldRow);
+                    }
+
+                    Patient p = optP.get();
+                    p.setWardNo(ward.getWardNo());
+                    p.setPatientType("IP");
+
+                    ward.setPatientId(request.getAadhaar());
+                    ward.setFirstName(p.getFirstName());
+                    ward.setLastName(p.getLastName());
+                    ward.setEmpty(false);
+
+                    //Need to update the entry in table patient, admit, ward
+                    admitRepo.save(admit);
+                    Integer count = patientRepo.updatePatientRegistration(p.getAadhar(), "IP", ward.getWardNo(), time);
+                    log.info("Count updated: "+count);
+                    wardRepo.save(ward);
+
+                } else {
+                    //In case of discharge
+                    if (ward.isEmpty()) {
+                        log.info("updateWard | ward is already empty.");
+                    }
+                    else {
+                        if (!request.getAadhaar().equals(ward.getPatientId())) {
+                            throw new Exception("Patient is not allocated to this ward, check the request and table-data");
+                        }
+
+                        Optional<Patient> optP = patientRepo.findById(request.getAadhaar());
+                        if (optP.isEmpty()) {
+                            throw new RequestValidationException("No such patient found in the patient-table");
+                        }
+                        Patient p = optP.get();
+                        p.setWardNo("");
+                        patientRepo.save(p);
+
+                        WardHistory wardHistory = new WardHistory();
+                        wardHistory.setHistoryId(Utility.getUniqueId());
+                        wardHistory.setWardNo(ward.getWardNo());
+                        wardHistory.setPatientId(ward.getPatientId());
+                        wardHistory.setDate(OffsetDateTime.now());
+                        wardHistoryRepo.save(wardHistory);
+
+                        ward.setPatientId(null);
+                        ward.setFirstName(null);
+                        ward.setLastName(null);
+                        ward.setEmpty(true);
+                        ward.setDate(OffsetDateTime.now());
+                        wardRepo.save(ward);
+                    }
+                }
 
             } else {
-                if (ward.isEmpty()) {
-                    //In case the ward is already empty
-                    ward.setPatientId(null);
-                    ward.setFirstName(null);
-                    ward.setLastName(null);
-                    ward.setEmpty(true);
-                    wardRepo.save(ward);
-                    response.setResponse("SUCCESS");
-                    return response;
-                }
-                if (ward.getPatientId() == null || !ward.getPatientId().equals(patientDetail.getAadhaar())) {
-                    response.setError("Patient is not allocated to this ward.");
-                    return response;
-                }
-
-                p.setWardNo("");
-                p.setPatientType("OP");
-
-                //make the entry in ward history
-                WardHistory wardHistory = new WardHistory();
-                wardHistory.setHistoryId(Utility.getUniqueId());
-                wardHistory.setWardNo(ward.getWardNo());
-                wardHistory.setPatientId(ward.getPatientId());
-                wardHistory.setDate(OffsetDateTime.now());
-                wardHistoryRepo.save(wardHistory);
-
-                ward.setPatientId(null);
-                ward.setFirstName(null);
-                ward.setLastName(null);
-                ward.setEmpty(true);
-                wardRepo.save(ward);
-
+                log.info("updateWard | Unauthorized access by NURSE or NURSE is not on the shift.");
+                response.setResponse("FAILED");
+                return response;
             }
+
             response.setResponse("SUCCESS");
+            log.info("updateWard | request processed successfully");
+
+        } catch (RequestValidationException e) {
+            log.error("updateWard | RequestValidationException occurred: " + e.getMessage());
+            response.setError(e.getMessage());
         } catch (Exception e) {
             log.error("updateWard | Exception occurred: " + e.getMessage());
             response.setError(e.getMessage());

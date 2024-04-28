@@ -15,7 +15,7 @@ import java.util.Optional;
 @Repository
 public interface AdmitRepo extends JpaRepository<Admit, String> {
 
-    Optional<Admit> findByPatientId(String patientId);
+    Optional<Admit> findByPatientIdAndActive(String patientId, boolean active);
 
     Optional<Admit> findByPatientIdAndActiveIsTrue(String patientId);
 

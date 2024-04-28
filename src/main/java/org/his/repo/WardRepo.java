@@ -9,4 +9,6 @@ import java.util.Optional;
 @Repository
 public interface WardRepo extends JpaRepository<Ward, String> {
     Optional<Ward> findByWardNo(String wardNo);
+
+    Optional<Ward> findByPatientId(String patientId);
 }

@@ -23,11 +23,13 @@ public class LoginController {
     public ResponseEntity<AuthResponse> authenticate(@RequestBody AuthRequest request){
         AuthResponse resp;
         resp = loginService.authenticate(request);
-        if(resp.getError() == null){
-            return ResponseEntity.status(HttpStatus.OK).body(resp);
-        }else{
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
-        }
+        return ResponseEntity.status(HttpStatus.OK).body(resp);
+
+//        if(resp.getError() == null){
+//            return ResponseEntity.status(HttpStatus.OK).body(resp);
+//        }else{
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
+//        }
     }
 
     @PostMapping("/changePassword")

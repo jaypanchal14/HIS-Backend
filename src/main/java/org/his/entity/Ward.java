@@ -21,6 +21,9 @@ public class Ward {
     private String patientId;
     private String firstName;
     private String lastName;
+
+    //While creating ward-rooms for the first time, please also save date while inserting
+
     @UpdateTimestamp
     private OffsetDateTime date;
 

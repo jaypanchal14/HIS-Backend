@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -17,8 +18,8 @@ public interface PatientRepo extends JpaRepository<Patient, String> {
 
     @Transactional
     @Modifying
-    @Query("UPDATE Patient p set p.patientType = ?2,p.wardNo = ?3  where p.aadhar = ?1")
-    Integer updatePatientRegistration(String aadhar, String type, String ward);
+    @Query("UPDATE Patient p set p.patientType = ?2,p.wardNo = ?3, p.updatedAt = ?4  where p.aadhar = ?1")
+    Integer updatePatientRegistration(String aadhaar, String type, String ward, OffsetDateTime time);
 
     List<Patient> findAllByAadharIn(Set<String> aadhar);
 
