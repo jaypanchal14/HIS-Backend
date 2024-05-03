@@ -3,6 +3,7 @@ package org.his.bean;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
+import java.util.List;
 import java.util.Map;
 
 @Data
@@ -17,6 +18,7 @@ public class DashboardResponse {
     private int onDuty;
     private int ipPatient;
     private int opPatient;
+    private List<EmergencyItem> emergencies;
 
     //Only used by admin
     private Map<String, Long> count;

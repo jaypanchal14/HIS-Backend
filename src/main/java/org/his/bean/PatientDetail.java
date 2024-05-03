@@ -23,6 +23,9 @@ public class PatientDetail {
     private MultipartFile image;    //This will only be used when it comes in API request
     private String remark;
 
+    //For emergency case
+    private String emerId;
+
     //Below fields are used for other operations related to patients
     private String wardNo;
     private String action;

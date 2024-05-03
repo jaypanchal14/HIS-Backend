@@ -2,18 +2,22 @@ package org.his.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.his.bean.*;
+import org.his.entity.Emergency;
 import org.his.entity.user.Doctor;
 import org.his.entity.user.Patient;
 import org.his.exception.NoSuchAccountException;
 import org.his.exception.RequestValidationException;
 import org.his.repo.AdmitRepo;
+import org.his.repo.EmergencyRepo;
 import org.his.repo.user.DoctorRepo;
 import org.his.repo.user.PatientRepo;
 import org.his.util.ShiftUtility;
+import org.his.util.Utility;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +38,9 @@ public class DoctorService {
 
     @Autowired
     private AdmitRepo admitRepo;
+
+    @Autowired
+    private EmergencyRepo emergencyRepo;
 
     //Not being used
     public PatientResponse viewPastPatients(String userId) {
@@ -103,6 +110,10 @@ public class DoctorService {
 
                 response.setIpPatient(ipPatientCount);
                 response.setOpPatient(opPatientCount);
+
+                List<Emergency> list = emergencyRepo.findAllByHandledIsFalseOrderByDateDesc();
+//                log.info("size of emer:"+list.size());
+                response.setEmergencies(getListFromEmergencyList(list));
             }
 
             log.info("getDashBoard | request processed successfully.");
@@ -117,6 +128,21 @@ public class DoctorService {
             response.setError(e.getMessage());
         }
         return response;
+    }
+
+    private List<EmergencyItem> getListFromEmergencyList(List<Emergency> list) {
+        List<EmergencyItem> itemList = new ArrayList<>();
+        for(Emergency bean : list){
+            EmergencyItem item = new EmergencyItem();
+            item.setEmerId(bean.getEmerId());
+            item.setDoctorId(bean.getDoctorId());
+            item.setHandled(bean.isHandled());
+            item.setRemark(bean.getRemark());
+            item.setTimestamp(Utility.getFormattedOffsetTime(bean.getDate()));
+
+            itemList.add(item);
+        }
+        return itemList;
     }
 
     private Shift getShiftForDoc(Doctor doctor) {
@@ -149,5 +175,55 @@ public class DoctorService {
         //Uncomment below for testing
         //obj.setProfileImage(fileService.loadUserImage(doctor.getProfileImage()));
         return obj;
+    }
+
+    public GeneralResp handleEmergency(String userId, String emerId) {
+        GeneralResp resp = new GeneralResp();
+        try{
+
+            if(userId==null || userId.isBlank() || emerId==null || emerId.isBlank()){
+                throw new RequestValidationException("Empty value received in request");
+            }
+
+            Doctor doc = doctorRepo.findById(userId).orElse(null);
+            if (doc == null) {
+                throw new NoSuchAccountException("No such doctor found in the table");
+            }
+
+            LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
+            int hour = now.getHour();
+            int currentDayOfWeek = now.getDayOfWeek().getValue();
+            if(doc.isHead() || ShiftUtility.isDoctorOnShift(doc,hour, currentDayOfWeek)){
+
+                Emergency emergency = emergencyRepo.findById(emerId).orElse(null);
+                if(emergency == null){
+                    throw new Exception("No such emergencyId exists in the table");
+                }
+                emergency.setDate(OffsetDateTime.now());
+                emergency.setDoctorId(userId);
+                emergency.setHandled(true);
+
+                emergencyRepo.save(emergency);
+
+            }else{
+                throw new Exception("Doctor is either not head-doctor or not on shift to handle the emergency");
+            }
+
+            resp.setResponse("SUCCESS");
+            log.info("handleEmergency | request processed successfully");
+        } catch (RequestValidationException e){
+            log.error("handleEmergency | RequestValidationException occurred: "+e.getMessage());
+            resp.setResponse("FAILED");
+            resp.setError(e.getMessage());
+        } catch (NoSuchAccountException e){
+            log.error("handleEmergency | NoSuchAccountException occurred: "+e.getMessage());
+            resp.setResponse("FAILED");
+            resp.setError(e.getMessage());
+        } catch (Exception e){
+            log.error("handleEmergency | Exception occurred: "+e.getMessage());
+            resp.setResponse("FAILED");
+            resp.setError(e.getMessage());
+        }
+        return resp;
     }
 }

@@ -66,4 +66,16 @@ public class ReceptionistController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
         }
     }
+
+    @PostMapping("/reception/emergency")
+    public ResponseEntity<?> raiseEmergency(@RequestParam("userId") String userId, @RequestBody GeneralResp request) {
+        log.info("raiseEmergency | request received for raising a emergency");
+        GeneralResp resp = receptionistService.raiseEmergency(userId, request);
+        if(resp.getError() == null){
+            return ResponseEntity.status(HttpStatus.OK).body(resp);
+        }else{
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
+        }
+    }
+
 }

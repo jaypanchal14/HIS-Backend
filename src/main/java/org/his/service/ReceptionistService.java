@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.his.bean.*;
 import org.his.config.Roles;
 import org.his.entity.Admit;
+import org.his.entity.Emergency;
 import org.his.entity.Login;
 import org.his.entity.user.Doctor;
 import org.his.entity.user.Patient;
@@ -11,6 +12,7 @@ import org.his.entity.user.Receptionist;
 import org.his.exception.NoSuchAccountException;
 import org.his.exception.RequestValidationException;
 import org.his.repo.AdmitRepo;
+import org.his.repo.EmergencyRepo;
 import org.his.repo.LoginRepo;
 import org.his.repo.user.DoctorRepo;
 import org.his.repo.user.PatientRepo;
@@ -52,6 +54,9 @@ public class ReceptionistService {
 
     @Autowired
     private AdmitRepo admitRepo;
+
+    @Autowired
+    private EmergencyRepo emergencyRepo;
 
     @Qualifier("jasyptStringEncryptor")
     @Autowired
@@ -206,9 +211,16 @@ public class ReceptionistService {
         admit.setAdmitId(Utility.getUniqueId());
         admit.setPatientId(patient.getAadhar());
         admit.setDate(OffsetDateTime.now());
-        admit.setPatientType(patient.getPatientType());
         admit.setActive(true);
-        admit.setEmergency(false);
+        if(request.getEmerId()!=null && !request.getEmerId().isBlank()){
+            admit.setEmergency(true);
+            admit.setEmerId(request.getEmerId());
+            admit.setPatientType("IP");
+            patient.setPatientType("IP");
+        }else{
+            admit.setEmergency(false);
+            admit.setPatientType("OP");
+        }
         if(request.getRemark() != null && !request.getRemark().isBlank()){
             admit.setRemark(stringEncryptor.encrypt(request.getRemark()));
         }else{
@@ -306,7 +318,7 @@ public class ReceptionistService {
         DashboardResponse resp = new DashboardResponse();
         try{
             if(userId==null || userId.isBlank()){
-                throw new RequestValidationException("Empty value receives in userId");
+                throw new RequestValidationException("Empty value received in userId");
             }
 
             Optional<Login> optLogin = loginRepo.findAccountByUserId(userId, Roles.RECEPTIONIST.toString());
@@ -352,4 +364,43 @@ public class ReceptionistService {
         return obj;
     }
 
+    public GeneralResp raiseEmergency(String userId, GeneralResp request) {
+        GeneralResp resp = new GeneralResp();
+        try{
+
+            if(userId==null || userId.isBlank()){
+                throw new RequestValidationException("Empty value received in userId");
+            }
+
+            Optional<Receptionist> optReception = receptionRepo.findById(userId);
+            if (optReception.isEmpty()) {
+                throw new NoSuchAccountException("user not found in the receptionist table");
+            }
+
+            Emergency obj = new Emergency();
+            obj.setEmerId(Utility.getEmergencyId());
+            obj.setDate(OffsetDateTime.now());
+            obj.setRemark(request.getResponse());
+            obj.setDoctorId(null);
+            obj.setHandled(false);
+
+            emergencyRepo.save(obj);
+
+            resp.setResponse(obj.getEmerId());
+
+        } catch (RequestValidationException e){
+            log.error("raiseEmergency | RequestValidationException occurred: "+e.getMessage());
+            resp.setResponse("FAILED");
+            resp.setError(e.getMessage());
+        } catch (NoSuchAccountException e){
+            log.error("raiseEmergency | NoSuchAccountException occurred: "+e.getMessage());
+            resp.setResponse("FAILED");
+            resp.setError(e.getMessage());
+        } catch (Exception e){
+            log.error("raiseEmergency | Exception occurred: "+e.getMessage());
+            resp.setResponse("FAILED");
+            resp.setError(e.getMessage());
+        }
+        return resp;
+    }
 }

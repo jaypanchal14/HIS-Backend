@@ -24,6 +24,10 @@ public class Utility {
         return str+System.currentTimeMillis();
     }
 
+    public static String getEmergencyId(){
+        return "EMER"+System.currentTimeMillis();
+    }
+
     final static String passwordString = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
     final static SecureRandom rnd = new SecureRandom();

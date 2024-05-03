@@ -2,6 +2,7 @@ package org.his.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.his.bean.DashboardResponse;
+import org.his.bean.GeneralResp;
 import org.his.bean.PatientResponse;
 import org.his.service.DoctorService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,4 +41,18 @@ public class DoctorController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
         }
     }
+
+    @GetMapping("/doc/handleEmergency")
+    public ResponseEntity<?> handleEmergency(@RequestParam(name = "userId") String userId,
+                                             @RequestParam(name = "emerId") String emerId ){
+        log.info("dashboard | request received to handleEmergency");
+        GeneralResp resp = doctorService.handleEmergency(userId, emerId);
+        if(resp.getError() == null){
+            return ResponseEntity.status(HttpStatus.OK).body(resp);
+        }else{
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
+        }
+    }
+
+
 }
