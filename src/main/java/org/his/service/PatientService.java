@@ -170,6 +170,12 @@ public class PatientService {
             detail = new PatientDetail();
             detail.setAadhaar(obj.getAadhar());
             detail.setAdmitId(admit.getAdmitId());
+            detail.setEmerId(admit.getEmerId());
+
+            if(admit.isEmergency()){
+                detail.setEmerId(admit.getEmerId());
+            }
+
             if(admit.getRemark()!=null && !admit.getRemark().isBlank()){
                 detail.setRemark(stringEncryptor.decrypt(admit.getRemark()));
             }else{

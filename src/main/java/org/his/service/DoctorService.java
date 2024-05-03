@@ -199,6 +199,10 @@ public class DoctorService {
                 if(emergency == null){
                     throw new Exception("No such emergencyId exists in the table");
                 }
+
+                if(emergency.isHandled()){
+                    throw new Exception("This emergency is already handled by another doctor");
+                }
                 emergency.setDate(OffsetDateTime.now());
                 emergency.setDoctorId(userId);
                 emergency.setHandled(true);
