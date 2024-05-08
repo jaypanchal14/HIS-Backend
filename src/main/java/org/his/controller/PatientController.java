@@ -86,6 +86,32 @@ public class PatientController {
         }
     }
 
+    @GetMapping("/patient/getFilePostman")
+    public ResponseEntity<?> getFilePostman(
+            @RequestParam(name = "role") String role,
+            @RequestParam(name = "fileName") String fileName,
+            @RequestParam(name = "diagnosisId") String diagnosisId,
+            @RequestParam(name = "userId") String userId
+    ) {
+
+        log.info("getFilePostman | request received with file: "+fileName+", diagnosis:"+diagnosisId);
+        FileResponse resp = patientService.getFileForPostman(role, userId, fileName, diagnosisId);
+
+        if(resp.getError() == null){
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(Utility.determineMediaType(fileName));
+            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + fileName);
+            headers.add("Cache-Control", "no-cache, no-store, must-revalidate");
+            headers.add("Pragma", "no-cache");
+            headers.add("Expires", "0");
+            return ResponseEntity.status(HttpStatus.OK).headers(headers)
+                    .body(resp.getResource());
+        }else{
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
+        }
+    }
+
+    //BELOW ENDPOINT WILL NOT DISPLAY CONTENT ON THE POSTMAN
     @GetMapping("/patient/getDiagnosisFile")
     public ResponseEntity<?> getDiagnosisFile(
             @RequestParam(name = "role") String role,
@@ -94,25 +120,41 @@ public class PatientController {
             @RequestParam(name = "userId") String userId
     ) {
 
-        log.info("getDiagnosisFile | request received.");
+        log.info("getDiagnosisFile | request received with file: "+fileName+", diagnosis:"+diagnosisId);
         FileResponse resp = patientService.getDiagnosisFile(role, userId, fileName, diagnosisId);
 
         if(resp.getError() == null){
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(Utility.determineMediaType(fileName));
-//            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + fileName);
-            headers.add("Cache-Control", "no-cache, no-store, must-revalidate");
-            headers.add("Pragma", "no-cache");
-            headers.add("Expires", "0");
-//            ByteArrayResource resource = new ByteArrayResource(resp.getContent());
-            return ResponseEntity.status(HttpStatus.OK).headers(headers)
-//                    .contentLength(resp.getContent().length)
-                    .body(resp.getResource());
+            return ResponseEntity.status(HttpStatus.OK).body(resp);
         }else{
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
         }
     }
+
+//    @GetMapping("/patient/getDiagnosisFileForPhone")
+//    public ResponseEntity<?> getDiagnosisFileForPhone(
+//            @RequestParam(name = "role") String role,
+//            @RequestParam(name = "fileName") String fileName,
+//            @RequestParam(name = "diagnosisId") String diagnosisId,
+//            @RequestParam(name = "userId") String userId
+//    ) {
+//
+//        log.info("getDiagnosisFileForPhone | request received with file: "+fileName+", diagnosis:"+diagnosisId);
+//        FileResponse resp = patientService.getDiagnosisFileForPhone(role, userId, fileName, diagnosisId);
+//
+//        if(resp.getError() == null){
+//            HttpHeaders headers = new HttpHeaders();
+//            headers.setContentType(Utility.determineMediaType(fileName));
+////            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+//            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + fileName);
+//            headers.add("Cache-Control", "no-cache, no-store, must-revalidate");
+//            headers.add("Pragma", "no-cache");
+//            headers.add("Expires", "0");
+//            return ResponseEntity.status(HttpStatus.OK).headers(headers)
+//                    .body(resp.getStringContent());
+//        }else{
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
+//        }
+//    }
 
     @GetMapping("/patient/pastHistory")
     public ResponseEntity<?> pastHistory(

@@ -763,11 +763,16 @@ public class PatientService {
                 throw new Exception("No such diagnosis-file found in the table");
             }
 
-//            byte[] content = fileService.loadPatientFile(fileName);
-//            resp.setContent(content);
+            //byte[] content = fileService.loadPatientFile(fileName);
+            //resp.setContent(content);
 
-            Resource resource = fileService.loadPatientFile(fileName);
-            resp.setResource(resource);
+            //Resource resource = fileService.loadPatientFile(fileName);
+            //resp.setResource(resource);
+
+            resp.setStringContent(fileService.loadPatientFileAsString(fileName));
+
+//            Resource resource = fileService.loadPatientFileAsResource(fileName);
+//            resp.setResource(resource);
 
             log.info("getDiagnosisFile | request processed successfully");
         } catch (NoSuchAccountException e) {
@@ -782,4 +787,125 @@ public class PatientService {
         }
         return resp;
     }
+
+    public FileResponse getFileForPostman(String role, String userId, String fileName, String diagnosisId) {
+        FileResponse resp = new FileResponse();
+        Nurse nurse;
+        Doctor doctor;
+        try{
+
+            if (fileName == null || fileName.isBlank() || diagnosisId == null || diagnosisId.isBlank() ) {
+                throw new RequestValidationException("Empty fileName or diagnosisId passed in the request");
+            }
+
+            if (role == null || role.isBlank() || userId == null || userId.isBlank() ) {
+                throw new RequestValidationException("Empty role or userId passed in the request");
+            }
+
+            role = role.toUpperCase();
+            if("NURSE".equals(role)){
+                nurse = nurseRepo.findById(userId).orElse(null);
+                if (nurse == null) {
+                    throw new NoSuchAccountException("Nurse not found in the nurse table");
+                }
+                if(!nurse.isHead()){
+                    throw new Exception("Nurse is not head-nurse and still trying to view past-history, terminating the request");
+                }
+
+            } else if ("DOCTOR".equals(role)) {
+                doctor = doctorRepo.findById(userId).orElse(null);
+                if (doctor == null) {
+                    throw new NoSuchAccountException("Invalid Doctor's userId passed in the request");
+                }
+                if(!doctor.isHead()){
+                    LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
+                    int hour = now.getHour();
+                    int currentDayOfWeek = now.getDayOfWeek().getValue();
+                    if(!ShiftUtility.isDoctorOnShift(doctor, hour, currentDayOfWeek)){
+                        throw new Exception("Doctor is not on shift to view the diagnosis file");
+                    }
+                }
+            } else {
+                throw new RequestValidationException("role other than DOCTOR/NURSE passed int the request");
+            }
+
+            Optional<Diagnosis> diagOpt = diagnosisRepo.findByDiagnosisIdAndFile(diagnosisId, fileName);
+            if(diagOpt.isEmpty()){
+                throw new Exception("No such diagnosis-file found in the table");
+            }
+
+            Resource resource = fileService.loadPatientFile(fileName);
+            resp.setResource(resource);
+
+            log.info("getDiagnosisFile | request processed successfully");
+        } catch (Exception e){
+            log.error("getDiagnosisFile | Exception occurred: "+e.getMessage());
+            resp.setError(e.getMessage());
+        }
+        return resp;
+    }
+
+//    public FileResponse getDiagnosisFileForPhone(String role, String userId, String fileName, String diagnosisId) {
+//        FileResponse resp = new FileResponse();
+//        Nurse nurse;
+//        Doctor doctor;
+//        try{
+//
+//            if (fileName == null || fileName.isBlank() || diagnosisId == null || diagnosisId.isBlank() ) {
+//                throw new RequestValidationException("Empty fileName or diagnosisId passed in the request");
+//            }
+//
+//            if (role == null || role.isBlank() || userId == null || userId.isBlank() ) {
+//                throw new RequestValidationException("Empty role or userId passed in the request");
+//            }
+//
+//            role = role.toUpperCase();
+//            if("NURSE".equals(role)){
+//                nurse = nurseRepo.findById(userId).orElse(null);
+//                if (nurse == null) {
+//                    throw new NoSuchAccountException("Nurse not found in the nurse table");
+//                }
+//                if(!nurse.isHead()){
+//                    throw new Exception("Nurse is not head-nurse and still trying to view past-history, terminating the request");
+//                }
+//
+//            } else if ("DOCTOR".equals(role)) {
+//                doctor = doctorRepo.findById(userId).orElse(null);
+//                if (doctor == null) {
+//                    throw new NoSuchAccountException("Invalid Doctor's userId passed in the request");
+//                }
+//                if(!doctor.isHead()){
+//                    LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
+//                    int hour = now.getHour();
+//                    int currentDayOfWeek = now.getDayOfWeek().getValue();
+//                    if(!ShiftUtility.isDoctorOnShift(doctor, hour, currentDayOfWeek)){
+//                        throw new Exception("Doctor is not on shift to view the diagnosis file");
+//                    }
+//                }
+//            } else {
+//                throw new RequestValidationException("role other than DOCTOR/NURSE passed int the request");
+//            }
+//
+//            Optional<Diagnosis> diagOpt = diagnosisRepo.findByDiagnosisIdAndFile(diagnosisId, fileName);
+//            if(diagOpt.isEmpty()){
+//                throw new Exception("No such diagnosis-file found in the table");
+//            }
+//
+//            resp.setContent(fileService.loadPatientFileForPhone(fileName));
+//
+//
+//            log.info("getDiagnosisFileForPhone | request processed successfully");
+//        } catch (NoSuchAccountException e) {
+//            log.error("getDiagnosisFileForPhone | NoSuchAccountException occurred: " + e.getMessage());
+//            resp.setError(e.getMessage());
+//        } catch (RequestValidationException e) {
+//            log.error("getDiagnosisFileForPhone | RequestValidationException occurred: " + e.getMessage());
+//            resp.setError(e.getMessage());
+//        } catch (Exception e){
+//            log.error("getDiagnosisFileForPhone | Exception occurred: "+e.getMessage());
+//            resp.setError(e.getMessage());
+//        }
+//        return resp;
+//    }
+
 }

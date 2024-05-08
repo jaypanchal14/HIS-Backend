@@ -3,6 +3,7 @@ package org.his.service;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
@@ -92,10 +93,7 @@ public class FilesStorageService {
             Path file = patientRoot.resolve(filename);
             Resource resource = new UrlResource(file.toUri());
             if (resource.exists() || resource.isReadable()) {
-                //return Base64.getEncoder().encodeToString(resource.getContentAsByteArray());
-//                return resource.getContentAsByteArray();
-//                return Files.readAllBytes(file);
-                return new UrlResource(file.toUri());
+                return resource;
             } else {
                 throw new RuntimeException("Could not load the patient-file:"+filename);
             }
@@ -105,14 +103,34 @@ public class FilesStorageService {
         return null;
     }
 
-    private Resource loadPatientFileAsResource(String filename) throws IOException {
-        Path file = patientRoot.resolve(filename);
-        Resource resource = new UrlResource(file.toUri());
-        if (resource.exists()) {
-            return resource;
-        } else {
-            throw new RuntimeException("File not found: " + filename);
+    public String loadPatientFileAsString(String filename) {
+        try {
+            Path file = patientRoot.resolve(filename);
+            Resource resource = new UrlResource(file.toUri());
+            if (resource.exists() || resource.isReadable()) {
+                return Base64.getEncoder().encodeToString(resource.getContentAsByteArray());
+            } else {
+                throw new RuntimeException("Could not load the patient-file:"+filename);
+            }
+        } catch ( IOException e) {
+            log.error("IOException occurred while loading the image : "+e.getMessage());
         }
+        return null;
     }
 
+//    public byte[] loadPatientFileForPhone(String fileName) {
+//        try {
+//            Path file = patientRoot.resolve(fileName);
+//            Resource resource = new UrlResource(file.toUri());
+//            if (resource.exists() || resource.isReadable()) {
+//                return resource.getContentAsByteArray();
+////                return Files.readAllBytes(file);
+//            } else {
+//                throw new RuntimeException("Could not load the patient-file:"+fileName);
+//            }
+//        } catch ( IOException e) {
+//            log.error("IOException occurred while loading the image : "+e.getMessage());
+//        }
+//        return null;
+//    }
 }

@@ -10,6 +10,7 @@ public class FileResponse {
 
     private byte[] content;
     private Resource resource;
+    private String stringContent;
     private String error;
 
 }
