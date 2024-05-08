@@ -349,7 +349,7 @@ public class NurseService {
                 response.setOnDuty(1);
             }
 
-            if (optNurse.get().isHead() && response.getOnDuty() == 1) {
+            if (optNurse.get().isHead() || response.getOnDuty() == 1) {
                 //If head-nurse is on duty, display IP/OP patient count
                 int ipPatientCount = admitRepo.countAdmitByActiveIsTrueAndPatientType("IP");
                 int opPatientCount = admitRepo.countAdmitByActiveIsTrueAndPatientType("OP");
