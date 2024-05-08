@@ -669,11 +669,17 @@ public class AdminService {
 
             validateAdminId(userId);
 
+            Optional<Login> l = loginRepo.findAccountByUserId(userId, "ADMIN");
+            if(l.isEmpty()){
+                throw new NoSuchAccountException("Invalid userId passed in the request");
+            }
+
             Optional<Admin> optAdmin = adminRepo.findById(userId);
             if (optAdmin.isEmpty()) {
                 throw new Exception("userId not found in the admin table");
             } else {
                 PersonalDetail detail = getDetailForAdmin(optAdmin.get());
+                detail.setEmail(l.get().getUsername());
                 resp.setDetail(detail);
             }
             List<RoleCount> ls = loginRepo.countActiveUserByRole();

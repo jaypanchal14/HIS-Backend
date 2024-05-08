@@ -3,12 +3,14 @@ package org.his.service;
 import lombok.extern.slf4j.Slf4j;
 import org.his.bean.*;
 import org.his.entity.Emergency;
+import org.his.entity.Login;
 import org.his.entity.user.Doctor;
 import org.his.entity.user.Patient;
 import org.his.exception.NoSuchAccountException;
 import org.his.exception.RequestValidationException;
 import org.his.repo.AdmitRepo;
 import org.his.repo.EmergencyRepo;
+import org.his.repo.LoginRepo;
 import org.his.repo.user.DoctorRepo;
 import org.his.repo.user.PatientRepo;
 import org.his.util.ShiftUtility;
@@ -41,6 +43,9 @@ public class DoctorService {
 
     @Autowired
     private EmergencyRepo emergencyRepo;
+
+    @Autowired
+    private LoginRepo loginRepo;
 
     //Not being used
     public PatientResponse viewPastPatients(String userId) {
@@ -89,11 +94,17 @@ public class DoctorService {
                 throw new RequestValidationException("Empty doctorId passed in the request");
             }
 
+            Optional<Login> l = loginRepo.findAccountByUserId(userId, "DOCTOR");
+            if(l.isEmpty()){
+                throw new NoSuchAccountException("Invalid userId passed in the request");
+            }
+
             Optional<Doctor> optDoc = doctorRepo.findById(userId);
             if (optDoc.isEmpty()) {
                 throw new NoSuchAccountException("No such doctor found in the table");
             }else{
                 PersonalDetail detail = getDetailForDoc(optDoc.get());
+                detail.setEmail(l.get().getUsername());
                 response.setDetail(detail);
 
                 Shift shift = getShiftForDoc(optDoc.get());

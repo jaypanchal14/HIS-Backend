@@ -45,7 +45,7 @@ public class DoctorController {
     @GetMapping("/doc/handleEmergency")
     public ResponseEntity<?> handleEmergency(@RequestParam(name = "userId") String userId,
                                              @RequestParam(name = "emerId") String emerId ){
-        log.info("dashboard | request received to handleEmergency");
+        log.info("dashboard | request received to handleEmergency by doctor:"+userId+", emergencyId:"+emerId);
         GeneralResp resp = doctorService.handleEmergency(userId, emerId);
         if(resp.getError() == null){
             return ResponseEntity.status(HttpStatus.OK).body(resp);

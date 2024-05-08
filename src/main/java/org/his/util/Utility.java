@@ -1,5 +1,6 @@
 package org.his.util;
 
+import org.springframework.http.MediaType;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -84,4 +85,25 @@ public class Utility {
         str = str.replace("-","").substring(0,15);
         return str+System.currentTimeMillis()+extension;
     }
+
+
+    public static MediaType determineMediaType(String filePath) {
+        // Extract file extension from the file path
+        String fileExtension = filePath.substring(filePath.lastIndexOf('.') + 1).toLowerCase();
+
+        // Map file extensions to MediaTypes
+        return switch (fileExtension) {
+            case "pdf" -> MediaType.APPLICATION_PDF;
+            case "txt" -> MediaType.TEXT_PLAIN;
+            case "doc" -> MediaType.valueOf("application/msword");
+            case "docx" -> MediaType.valueOf("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+            case "xls" -> MediaType.valueOf("application/vnd.ms-excel");
+            case "xlsx" -> MediaType.valueOf("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            case "jpg", "jpeg" -> MediaType.IMAGE_JPEG;
+            case "png" -> MediaType.IMAGE_PNG;
+            default -> MediaType.APPLICATION_OCTET_STREAM; // Fallback to binary data
+        };
+    }
+
+
 }

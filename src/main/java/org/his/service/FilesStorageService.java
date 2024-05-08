@@ -87,16 +87,17 @@ public class FilesStorageService {
         log.info("Patient-Diagnosis uploaded :" +newName);
     }
 
-    public String loadPatientImage(String filename) {
+    public Resource loadPatientFile(String filename) {
         try {
             Path file = patientRoot.resolve(filename);
             Resource resource = new UrlResource(file.toUri());
-
             if (resource.exists() || resource.isReadable()) {
-                return Base64.getEncoder().encodeToString(resource.getContentAsByteArray());
-                //return resource.getContentAsByteArray();
+                //return Base64.getEncoder().encodeToString(resource.getContentAsByteArray());
+//                return resource.getContentAsByteArray();
+//                return Files.readAllBytes(file);
+                return new UrlResource(file.toUri());
             } else {
-                throw new RuntimeException("Could not read the profile-image!");
+                throw new RuntimeException("Could not load the patient-file:"+filename);
             }
         } catch ( IOException e) {
             log.error("IOException occurred while loading the image : "+e.getMessage());

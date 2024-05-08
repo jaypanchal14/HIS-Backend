@@ -1,13 +1,14 @@
 package org.his.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import org.his.bean.DiagnosisResponse;
-import org.his.bean.GeneralResp;
-import org.his.bean.OnePatientResponse;
-import org.his.bean.PatientResponse;
+import org.his.bean.*;
 import org.his.service.PatientService;
+import org.his.util.Utility;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -80,6 +81,34 @@ public class PatientController {
         DiagnosisResponse resp = patientService.getDiagnosisForAdmitId(role, admitId, userId);
         if(resp.getError() == null){
             return ResponseEntity.status(HttpStatus.OK).body(resp);
+        }else{
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
+        }
+    }
+
+    @GetMapping("/patient/getDiagnosisFile")
+    public ResponseEntity<?> getDiagnosisFile(
+            @RequestParam(name = "role") String role,
+            @RequestParam(name = "fileName") String fileName,
+            @RequestParam(name = "diagnosisId") String diagnosisId,
+            @RequestParam(name = "userId") String userId
+    ) {
+
+        log.info("getDiagnosisFile | request received.");
+        FileResponse resp = patientService.getDiagnosisFile(role, userId, fileName, diagnosisId);
+
+        if(resp.getError() == null){
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(Utility.determineMediaType(fileName));
+//            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + fileName);
+            headers.add("Cache-Control", "no-cache, no-store, must-revalidate");
+            headers.add("Pragma", "no-cache");
+            headers.add("Expires", "0");
+//            ByteArrayResource resource = new ByteArrayResource(resp.getContent());
+            return ResponseEntity.status(HttpStatus.OK).headers(headers)
+//                    .contentLength(resp.getContent().length)
+                    .body(resp.getResource());
         }else{
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
         }

@@ -3,6 +3,7 @@ package org.his.service;
 import lombok.extern.slf4j.Slf4j;
 import org.his.bean.*;
 import org.his.entity.Admit;
+import org.his.entity.Login;
 import org.his.entity.Ward;
 import org.his.entity.WardHistory;
 import org.his.entity.user.Nurse;
@@ -324,11 +325,17 @@ public class NurseService {
                 throw new RequestValidationException("Empty nurseId passed in the request");
             }
 
+            Optional<Login> l = loginRepo.findAccountByUserId(userId, "NURSE");
+            if(l.isEmpty()){
+                throw new NoSuchAccountException("Invalid userId passed in the request");
+            }
+
             Optional<Nurse> optNurse = nurseRepo.findById(userId);
             if (optNurse.isEmpty()) {
                 throw new NoSuchAccountException("No such nurse found in the table");
             } else {
                 PersonalDetail detail = getDetailForNurse(optNurse.get());
+                detail.setEmail(l.get().getUsername());
                 response.setDetail(detail);
 
                 Shift shift = getShiftForNurse(optNurse.get());

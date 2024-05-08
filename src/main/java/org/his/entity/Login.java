@@ -2,6 +2,7 @@ package org.his.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.OffsetDateTime;
 
@@ -18,6 +19,7 @@ public class Login {
     private String userId;
     private String role;
     private boolean isActive;
+    @UpdateTimestamp
     private OffsetDateTime updatedAt;
 
 }
